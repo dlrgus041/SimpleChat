@@ -1,0 +1,9 @@
+.selector-for-some-widget {
+    box-sizing: content-box;
+}
+
+#background {
+    background-color: skyblue;
+    height: 80vh;
+    margin-bottom: 10px;
+}
