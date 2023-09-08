@@ -2,7 +2,7 @@
     box-sizing: content-box;
 }
 
-#background {
+#chatArea {
     background-color: skyblue;
     height: 80vh;
     margin-bottom: 10px;
