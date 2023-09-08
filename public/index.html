@@ -9,9 +9,9 @@
       <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
           <span class="navbar-brand mb-0 h1">Simple Chat Client using WebSocket</span>
-          <form class="d-flex mb-0" role="search">
-            <input id="nickname" class="form-control me-2" type="search" placeholder="Type your nickname" aria-label="Search">
-            <button id="connect" class="btn btn-outline-success" type="button">Connect</button>
+          <div class="d-flex mb-0">
+            <input id="nickname" class="form-control me-1" type="search" placeholder="Type your nickname" aria-label="Search">
+            <button id="connect" class="btn btn-outline-success me-1" type="button">Connect</button>
             
             <!-- Button trigger Modal -->
             <button id="trigger" class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal" disabled>Close</button>
@@ -33,15 +33,15 @@
             </div>
             <!-- Modal end-->
 
-          </form>
+          </div>
         </div>
       </nav>
       <div class="container-fluid">
         <div class="container-fluid" id="chatArea"></div>
-        <form class="d-flex" role="search">
+        <div class="d-flex">
           <input id="message" class="form-control me-2" type="search" placeholder="Type messages..." aria-label="Search" disabled>
-          <button id="send" class="btn btn-secondary" type="submit" disabled>Send</button>
-        </form>
+          <button id="send" class="btn btn-secondary" type="button" disabled>Send</button>
+        </div>
       </div>
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
       <script type="module" src="main.js"></script>

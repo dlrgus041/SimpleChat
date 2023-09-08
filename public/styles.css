@@ -6,4 +6,30 @@
     background-color: skyblue;
     height: 80vh;
     margin-bottom: 10px;
+    padding: 10px;
+    overflow: auto;
+}
+
+.alert {
+    padding: 0.5rem 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.outer {
+    margin-bottom: 1rem;
+}
+
+.inner {
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+.mine {
+    background-color: white;
+    text-align: right;
+}
+
+.other {
+    background-color: lightyellow;
+    text-align: left;
 }
