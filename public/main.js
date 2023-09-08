@@ -1,19 +1,18 @@
-import Websocket from 'ws';
-const ws = null;
+var ws = null;
 
-const nickname = null;
+var nickname = null;
 
-function connect() {
+document.querySelector('#connect').addEventListener('click', () => {
+    ws = new WebSocket('ws://localhost:8080/server');
 
-    ws = new Websocket('ws://localhost:3001');
-
-    ws.on('error', (err) => {
-        console.log(err);
+    ws.addEventListener('error', (event) => {
+        console.log(event.data);
     });
 
-    ws.on('open', () => {
+    ws.addEventListener('open', (event) => {
+        console.log(event.data);
         console.log('Connected to server');
         nickname = document.querySelector('#nickname').value;
         document.querySelector('#connect').disabled = true
     });
-}
+});
