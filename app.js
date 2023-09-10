@@ -21,13 +21,13 @@ const decoder = new StringDecoder('utf8');
 
 const map = new Map();
 
-wss.on('connection', (ws) => {
-
-    function broadcast(data) {
-        for (const websocket of map.values()) {
-            websocket.send(JSON.stringify(data));
-        }
+function broadcast(data) {
+    for (const websocket of map.values()) {
+        websocket.send(JSON.stringify(data));
     }
+}
+
+wss.on('connection', (ws) => {
 
     ws.on('close', (code, reason) => {
         map.delete(reason.toString());
@@ -36,7 +36,6 @@ wss.on('connection', (ws) => {
   
     ws.on('message', (rawdata) => {
         const data = JSON.parse(rawdata);
-
         switch (data['type']) {
             case 'Welcome':
                 broadcast(data);

@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>SimpleChatClient</title>
+        <title>Group Chat Client</title>
         <meta name="viewport">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
         <link href="styles.css" rel="stylesheet" />
@@ -8,12 +8,48 @@
     <body>
       <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
-          <span class="navbar-brand mb-0 h1">Group Chat Client</span>
+          
+          <!-- left offcanvas -->
+          <button id="members" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLeft" aria-controls="offcanvasLeft">Members</button>
+          <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasLeft" aria-labelledby="offcanvasLeftLabel">
+            <div class="offcanvas-header">
+              <h1 class="offcanvas-title" id="offcanvasRightLabel">Members</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div id="memberArea" class="offcanvas-body">
+
+              <!-- Member form -->
+              <div class="info container">
+                <div class="row">
+                  <div class="col">
+                    <span class="h3 mb-0">Nickname</span>
+                  </div>
+                  <div class="col text-center">
+                    <button class="btn btn-outline-primary">Invite</button>
+                    <button class="btn btn-outline-secondary">Whisper</button>                    </div>
+                </div>
+              </div>
+              <!-- Member form -->
+
+              <!-- Cicle progress bar-->
+              <div id="progress" style="display: none; position: relative; width: 100%; height: 100%;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                  <div class="spinner-border" style="width: 10rem; height: 10rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Cicle progress bar-->
+
+            </div>
+          </div>
+          <!-- left offcanvas -->
+
           <div class="d-flex mb-0">
             <input id="nickname" class="form-control me-1" type="search" placeholder="Type your nickname" aria-label="Search">
             <button id="connect" class="btn btn-outline-success me-1" type="button">Connect</button>
             
-            <!-- Button trigger Modal -->
+            <!-- Modal -->
             <button id="trigger" class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal" disabled>Close</button>
             <!-- Modal -->
             <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -31,40 +67,55 @@
                 </div>
               </div>
             </div>
-            <!-- Modal end-->
-
           </div>
-          <button id="participants" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Participants</button>
+          <!-- Modal -->
+
+          <!-- right offcanvas -->
+          <button id="chatRooms" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">ChatRooms</button>
           <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
             <div class="offcanvas-header">
-              <h1 class="offcanvas-title" id="offcanvasRightLabel">Participants</h1>
+              <h1 class="offcanvas-title" id="offcanvasRightLabel">ChatRooms</h1>
               <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-            <div class="offcanvas-body">
-              <li></li>
+          <div id="chatRoomArea" class="offcanvas-body">
+
+              <!-- ChatRoom form -->
+              <div id="chatRoomForm" class="info container">
+                <div class="row">
+                  <div class="col">
+                    <span class="h3 mb-0">ChatRoom n</span>
+                  </div>
+                  <div class="col text-center">
+                    <button class="btn btn-outline-success">Enter</button>
+                    <button class="btn btn-outline-danger">Leave</button>                    </div>
+                </div>
+              </div>
+              <!-- ChatRoom form -->
+
             </div>
           </div>
+          <!-- right offcanvas -->
         </div>
       </nav>
       <div class="container-fluid">
-        <div class="container-fluid" id="chatArea"></div>
+        <div class="container-fluid" id="groupChatArea">
+
+          <!-- Alert form -->
+          <div id="alertForm" class="alert" role="alert" style="text-align: center; display: none;"></div>
+          <!-- Alert form -->
+
+          <!-- Group chat form -->
+          <div id="groupChatForm" class="outer" style="display: none;">
+            <div class="inner" style="display: inline ;"></div>
+          </div>
+          <!-- Group chat form -->
+
+        </div>
         <div class="d-flex">
           <input id="message" class="form-control me-2" type="search" placeholder="Type messages..." aria-label="Search" disabled>
           <button id="send" class="btn btn-dark" type="button" disabled>Send</button>
         </div>
       </div>
-      <!-- Participant Info -->
-      <div class="participant container">
-        <div class="row">
-          <div class="col">
-            <span class="h3 mb-0">Nickname</span>
-          </div>
-          <div class="col text-center">
-            <button class="btn btn-outline-primary">Invite</button>
-            <button class="btn btn-outline-secondary">Whisper</button>                    </div>
-        </div>
-      </div>
-      <!-- Participant Info -->
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
       <script type="module" src="main.js"></script>
     </body>

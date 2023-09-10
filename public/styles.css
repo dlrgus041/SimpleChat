@@ -2,7 +2,7 @@
     box-sizing: content-box;
 }
 
-#chatArea {
+#groupChatArea {
     background-color: #FBCEB1;
     height: 80vh;
     margin-bottom: 10px;
@@ -10,7 +10,7 @@
     overflow: auto;
 }
 
-#participants {
+#Members, #ChatRooms {
     color: white;
 }
 
@@ -42,7 +42,7 @@
     overflow: auto;
 }
 
-.participant {
+.info {
     display: none;
     border-top: 1px solid black;
     padding: 0.5rem;
