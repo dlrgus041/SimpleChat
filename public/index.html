@@ -8,7 +8,7 @@
     <body>
       <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
-          <span class="navbar-brand mb-0 h1">Simple Chat Client using WebSocket</span>
+          <span class="navbar-brand mb-0 h1">Group Chat Client</span>
           <div class="d-flex mb-0">
             <input id="nickname" class="form-control me-1" type="search" placeholder="Type your nickname" aria-label="Search">
             <button id="connect" class="btn btn-outline-success me-1" type="button">Connect</button>
@@ -34,15 +34,37 @@
             <!-- Modal end-->
 
           </div>
+          <button id="participants" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Participants</button>
+          <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+            <div class="offcanvas-header">
+              <h1 class="offcanvas-title" id="offcanvasRightLabel">Participants</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+              <li></li>
+            </div>
+          </div>
         </div>
       </nav>
       <div class="container-fluid">
         <div class="container-fluid" id="chatArea"></div>
         <div class="d-flex">
           <input id="message" class="form-control me-2" type="search" placeholder="Type messages..." aria-label="Search" disabled>
-          <button id="send" class="btn btn-secondary" type="button" disabled>Send</button>
+          <button id="send" class="btn btn-dark" type="button" disabled>Send</button>
         </div>
       </div>
+      <!-- Participant Info -->
+      <div class="participant container">
+        <div class="row">
+          <div class="col">
+            <span class="h3 mb-0">Nickname</span>
+          </div>
+          <div class="col text-center">
+            <button class="btn btn-outline-primary">Invite</button>
+            <button class="btn btn-outline-secondary">Whisper</button>                    </div>
+        </div>
+      </div>
+      <!-- Participant Info -->
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
       <script type="module" src="main.js"></script>
     </body>

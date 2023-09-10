@@ -3,11 +3,15 @@
 }
 
 #chatArea {
-    background-color: skyblue;
+    background-color: #FBCEB1;
     height: 80vh;
     margin-bottom: 10px;
     padding: 10px;
     overflow: auto;
+}
+
+#participants {
+    color: white;
 }
 
 .alert {
@@ -32,4 +36,18 @@
 .other {
     background-color: lightyellow;
     text-align: left;
+}
+
+.offcanvas-body {
+    overflow: auto;
+}
+
+.participant {
+    display: none;
+    border-top: 1px solid black;
+    padding: 0.5rem;
+}
+
+li {
+    list-style-type: none;
 }

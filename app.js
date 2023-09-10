@@ -24,24 +24,27 @@ const map = new Map();
 wss.on('connection', (ws) => {
 
     function broadcast(data) {
-        for (const conn of map.keys()) {
-            conn.send(data);
+        for (const websocket of map.values()) {
+            websocket.send(JSON.stringify(data));
         }
     }
 
-    ws.on('close', () => {
-        const name = map.get(ws);
-        map.delete(ws);
-        broadcast('Goodbye:' + name);
+    ws.on('close', (code, reason) => {
+        map.delete(reason.toString());
+        broadcast({ 'type': 'Goodbye', 'sender': reason.toString() });
     });
   
     ws.on('message', (rawdata) => {
-        const data = decoder.write(new Buffer(rawdata));
-        broadcast(data);
+        const data = JSON.parse(rawdata);
 
-        const arr = data.split(':');
-        if (arr[0] === 'Welcome') {
-            map.set(ws, arr[1]);
+        switch (data['type']) {
+            case 'Welcome':
+                broadcast(data);
+                map.set(data['sender'], ws);
+                break;
+            case 'Message':
+                broadcast(data);
+                break;
         }
     });
 });

@@ -1,7 +1,9 @@
 var ws = null;
-var nickname = null;
+var nickname = '';
 var isClientConnected = false;
 const chatArea = document.querySelector('#chatArea');
+const memberArea = document.querySelector('.offcanvas-body');
+const participant = document.querySelector('.participant');
 
 function setEnablity(enablity, ...ids) {
     for (const id of ids) {
@@ -18,12 +20,23 @@ function chatAlert(type, message) {
     chatArea.appendChild(node);
 };
 
-function displayMessage(message, isMine) {
+function sendMessage(websocket, type, sender, receiver = null, message = null) {
+    websocket.send(JSON.stringify({
+        'type': type,
+        'sender': sender,
+        'receiver': receiver,
+        'message': message
+    }));
+}
+
+function displayMessage(payload) {
+
+    const isMine = (payload['sender'] === nickname);
 
     const inner = document.createElement('div');
-    inner.className = 'inner ' + (isMine ? 'mine' : 'other');
     inner.style.display = 'inline';
-    inner.innerHTML = message;
+    inner.className = 'inner ' + (isMine ? 'mine' : 'other');
+    inner.innerHTML = (isMine ? '' : (payload['sender'] + ': ')) + payload['message'];
 
     const outer = document.createElement('div');
     outer.style.textAlign = isMine ? 'right' : 'left';
@@ -41,31 +54,49 @@ document.querySelector('#connect').addEventListener('click', () => {
             isClientConnected = true;
             nickname = document.querySelector('#nickname').value;
             setEnablity(false, '#nickname', '#connect');
-            setEnablity(true, '#trigger', '#message', '#send');
+            setEnablity(true, '#participants', '#trigger', '#message', '#send');
             chatAlert('success', `Welcomme to Chat Server, ${nickname}!`);
-            ws.send('Welcome:' + nickname);
+            sendMessage(ws, 'Welcome', nickname);
         });
 
         ws.addEventListener('close', (event) => {
             if (!isClientConnected) return;
-            setEnablity(false, '#trigger', '#message', '#send');
+            setEnablity(false, '#participants', '#trigger', '#message', '#send');
             chatAlert('danger', `Server terminated. See you next time, ${nickname}!`);
         });
 
         ws.addEventListener('message', (event) => {
 
-            const arr = event.data.split(':');
-            switch (arr[0]) {
+            const payload = JSON.parse(event.data);
+            switch (payload['type']) {
                 case 'Welcome':
-                    chatAlert('success', `${arr[1]} joins the Chat Server. Say Hello to ${arr[1]}!`);
+                    // addPrtcpnt(payload['sender']);
+                    chatAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
                     break;
                 case 'Goodbye':
-                    chatAlert('warning', `${arr[1]} leaves the Chat Server.`);
+                    chatAlert('warning', `${payload['sender']} left the Chat Server.`);
                     break;
-                default:
-                    displayMessage(event.data, arr[0] === nickname);
+                case 'Message':
+                    displayMessage(payload);
+                    break;
             }
         });
+
+        function addPrtcpnt(prtcpnt) {
+
+            const node = participant.cloneNode(true);
+            node.style.display = 'block';
+
+            node.children[0].children[0].children[0].innerHTML = prtcpnt;
+            node.children[0].children[1].children[0].addEventListener('click', () => {
+                sendMessage(ws, 'Invite', nickname, prtcpnt);
+            });
+            node.children[0].children[1].children[1].addEventListener('click', () => {
+                sendMessage(ws, 'Whisper', nickname, prtcpnt);
+            });
+
+            memberArea.appendChild(node);
+        }
     } catch (e) {
         alert('Error occured whlie connect Server. \n\n' + e);
     }
@@ -74,12 +105,12 @@ document.querySelector('#connect').addEventListener('click', () => {
 document.querySelector('#close').addEventListener('click', () => {
     try {
         isClientConnected = false;
-        ws.close();
+        ws.close(1000, nickname);
         ws = null;
-        nickname = null;
+        nickname = '';
         document.querySelector('#nickname').value = '';
         setEnablity(true, '#connect', '#nickname', '#connect');
-        setEnablity(false, '#trigger', '#message', '#send');
+        setEnablity(false, '#participants', '#trigger', '#message', '#send');
         chatAlert('warning', 'Connection closed. You can re-connect to server.');
     } catch (e) {
         alert('Error occured whlie close connection. \n\n' + e);
@@ -87,6 +118,6 @@ document.querySelector('#close').addEventListener('click', () => {
 });
 
 document.querySelector('#send').addEventListener('click', () => {
-    ws.send(nickname + ':' + document.querySelector('#message').value);
+    sendMessage(ws, 'Message', nickname, null, document.querySelector('#message').value);
     document.querySelector('#message').value = '';
 });
