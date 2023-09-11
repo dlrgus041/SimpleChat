@@ -19,14 +19,62 @@
             <div id="memberArea" class="offcanvas-body">
 
               <!-- Member form -->
-              <div class="info container">
+              <div id="memberForm" class="info container">
                 <div class="row">
                   <div class="col">
                     <span class="h3 mb-0">Nickname</span>
                   </div>
                   <div class="col text-center">
-                    <button class="btn btn-outline-primary">Invite</button>
-                    <button class="btn btn-outline-secondary">Whisper</button>                    </div>
+
+                    <!-- invite modal button -->
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#inviteModal" disabled>Invite</button>
+                    <!-- invite modal -->
+                    <div class="modal fade" id="inviteModal" tabindex="-1" role="dialog" aria-labelledby="inviteModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            ...
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- invite modal-->
+
+                    <!-- whisper modal button -->
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#whisperModal" data-bs-dismiss="offcanvas">Whisper</button>
+                    <!-- whisper modal -->
+                    <div class="modal fade" id="whisperModal" tabindex="-1" role="dialog" aria-labelledby="whisperModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Whisper</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            ...
+                          </div>
+                          <div class="modal-footer">
+                            <button id="whisper" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Whisper modal -->
+
+                  </div>
                 </div>
               </div>
               <!-- Member form -->
@@ -49,10 +97,10 @@
             <input id="nickname" class="form-control me-1" type="search" placeholder="Type your nickname" aria-label="Search">
             <button id="connect" class="btn btn-outline-success me-1" type="button">Connect</button>
             
-            <!-- Modal -->
-            <button id="trigger" class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal" disabled>Close</button>
-            <!-- Modal -->
-            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <!-- close modal button -->
+            <button id="trigger" class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#closeModal" disabled>Close</button>
+            <!-- close modal -->
+            <div class="modal fade" id="closeModal" tabindex="-1" aria-labelledby="closeModalLabel" aria-hidden="true">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
@@ -68,7 +116,7 @@
               </div>
             </div>
           </div>
-          <!-- Modal -->
+          <!-- close Modal -->
 
           <!-- right offcanvas -->
           <button id="chatRooms" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">ChatRooms</button>

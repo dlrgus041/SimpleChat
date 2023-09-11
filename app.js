@@ -27,11 +27,20 @@ function broadcast(data) {
     }
 }
 
+function serialize(type, sender, receiver = null, message = null) {
+    return JSON.stringify({
+        'type': type,
+        'sender': sender,
+        'receiver': receiver,
+        'message': message
+    })
+}
+
 wss.on('connection', (ws) => {
 
     ws.on('close', (code, reason) => {
         map.delete(reason.toString());
-        broadcast({ 'type': 'Goodbye', 'sender': reason.toString() });
+        broadcast(serialize('Goodbye', reason.toString()));
     });
   
     ws.on('message', (rawdata) => {
@@ -43,6 +52,14 @@ wss.on('connection', (ws) => {
                 break;
             case 'Message':
                 broadcast(data);
+                break;
+            case 'Members':
+                data['message'] = [];
+                for (const member of map.keys()) {
+                    data['message'].push({ 'member' : member });
+                }
+                console.log(data);
+                map.get(data['sender']).send(JSON.stringify(data));
                 break;
         }
     });

@@ -43,7 +43,7 @@
 }
 
 .info {
-    display: none;
+    /* display: none; */
     border-top: 1px solid black;
     padding: 0.5rem;
 }

@@ -55,10 +55,10 @@ function sendMessage(websocket, type, sender, receiver = null, message = null) {
 
 function addMember(member) {
 
-    const node = participant.cloneNode(true);
+    const node = memberForm.cloneNode(true);
     node.style.display = 'block';
 
-    node.children[0].children[0].children[0].innerHTML = prtcpnt;
+    node.children[0].children[0].children[0].innerHTML = member;
     node.children[0].children[1].children[0].addEventListener('click', () => {
         sendMessage(ws, 'Invite', nickname, member);
     });
@@ -67,6 +67,10 @@ function addMember(member) {
     });
 
     memberArea.appendChild(node);
+}
+
+function clearMember() {
+    memberArea.textContent = '';
 }
 
 function addChatRoom(chatRoom) {
@@ -107,8 +111,9 @@ document.querySelector('#connect').addEventListener('click', () => {
                     displayMessage(payload);
                     break;
                 case 'Members':
-                    for (const member of payload['message']) {
-                        addMember(member);
+                    for (const members of payload['message']) {
+                        if (members['member'] === nickname) continue;
+                        addMember(members['member']);
                     }
                     document.querySelector('#progress').style.display = 'none';
                     break;
@@ -141,7 +146,7 @@ document.querySelector('#send').addEventListener('click', () => {
 
 document.querySelector('#members').addEventListener('click', () => {
     document.querySelector('#progress').style.display = 'block';
-    sendMessage(ws, 'Members', nickname);
+    // sendMessage(ws, 'Members', nickname);
 });
 
 // initialize
