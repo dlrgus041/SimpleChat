@@ -58,9 +58,12 @@ wss.on('connection', (ws) => {
                 for (const member of map.keys()) {
                     data['message'].push({ 'member' : member });
                 }
-                console.log(data);
                 map.get(data['sender']).send(JSON.stringify(data));
                 break;
+            case 'Whisper':
+                map.get(data['receiver']).send(JSON.stringify(data));
+                break;
+
         }
     });
 });

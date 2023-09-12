@@ -73,6 +73,9 @@
         </div>
       </div>
 
+      <!-- toast container -->
+      <div id="toastArea" class="toast-container position-fixed bottom-0 end-0 p-5"></div>
+
 <!-- Forms -->
 
       <!-- Member form -->
@@ -82,8 +85,8 @@
             <span class="h3 mb-0">Nickname</span>
           </div>
           <div class="col text-center">
-            <button class="btn btn-outline-primary" data-bs-toggle="modal">Invite</button>
-            <button class="btn btn-outline-secondary" data-bs-toggle="modal">Whisper</button>
+            <button class="btn btn-outline-primary" data-bs-dismiss="offcanvas">Invite</button>
+            <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Whisper</button>
           </div>
         </div>
       </div>
@@ -129,6 +132,13 @@
         </div>
       </div>
     <!-- modal form -->
+
+    <!-- toast form -->
+    <div id="toastForm" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-body"></div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <!-- toast form -->
 
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
       <script type="module" src="main.js"></script>

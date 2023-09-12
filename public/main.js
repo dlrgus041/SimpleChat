@@ -1,5 +1,4 @@
 // variables
-
 var ws = null;
 var nickname = '';
 var isClientConnected = false;
@@ -8,15 +7,17 @@ var isClientConnected = false;
 const groupChatArea = document.querySelector('#groupChatArea');
 const memberArea = document.querySelector('#memberArea');
 const chatRoomArea = document.querySelector('#chatRoomArea');
+const toastArea = document.querySelector('#toastArea');
 
 const groupChatForm = document.querySelector('#groupChatForm');
 const alertForm = document.querySelector('#alertForm');
 const memberForm = document.querySelector('#memberForm');
 const chatRoomForm = document.querySelector('#chatRoomForm');
 const modalForm = document.querySelector('#modalForm');
+const toastForm = document.querySelector('#toastForm');
 
 // functions
-function displyAlert(type, message) {
+function displayAlert(type, message) {
     const node = alertForm.cloneNode(true);
     node.style.display = 'block';
     node.classList.add(`alert-${type}`);
@@ -59,10 +60,11 @@ function addMember(memberName) {
 
     node.children[0].children[0].children[0].innerHTML = memberName;
     node.children[0].children[1].children[0].addEventListener('click', () => {
-        sendMessage(ws, 'Invite', nickname, memberName);
+        displayModal('invite', memberName);
+        new bootstrap.Modal(modalForm).show();
     });
     node.children[0].children[1].children[1].addEventListener('click', () => {
-        sendMessage(ws, 'Whisper', nickname, memberName);
+        displayModal('whisper', memberName);
     });
 
     memberArea.appendChild(node);
@@ -88,9 +90,7 @@ function addChatRoom(chatRoomName) {
     chatRoomArea.appendChild(node);
 }
 
-function makeModal(type, receiver = '') {
-
-    clearModalForm();
+function displayModal(type, receiver = null) {
 
     var title = '';
     var body = '';
@@ -109,25 +109,28 @@ function makeModal(type, receiver = '') {
                     document.querySelector('#nickname').value = '';
                     setEnablity(true, '#connect', '#nickname', '#connect');
                     setEnablity(false, '#members', '#chatRooms', '#message', '#send');
-                    displyAlert('warning', nickname + ', Connection closed. You can re-connect to server.');
+                    displayAlert('warning', nickname + ', Connection closed. You can re-connect to server.');
                 } catch (e) {
                     console.log('Error occured whlie close connection. \n\n' + e);
                 }
             };
             break;
         case 'whisper':
-            title = 'Notification';
-            body = `<h3>Whisper to ${receiver}:</h3><input id="whisperMessage" class="form-control ms-2 me-2" placeholder="Type message here">`;
+            title = `Whisper to ${receiver}`;
+            body = `<input id="whisperMessage" class="form-control ms-2 me-2" placeholder="Type message here">`;
             callback = () => {
                 const message = document.querySelector('#whisperMessage').value;
                 sendMessage(ws, 'Whisper', nickname, receiver, message);
+                displayToast(`Succefully whispered to ${receiver}.`);
+                displayAlert('secondary', `Whispers to ${receiver}: ${message}`);
             };
             break;
         case 'invite':
-            title = 'Notification';
+            title = 'Invite';
             body = `Invite ${receiver} to ChatRoom. Continue?`;
             callback = () => {
                 sendMessage(ws, 'Invite', nickname, receiver);
+                displayToast(`Send invitation to ${receiver}.`);
             };
             break;
         }
@@ -135,13 +138,22 @@ function makeModal(type, receiver = '') {
     modalForm.children[0].children[0].children[0].children[0].innerHTML = title;
     modalForm.children[0].children[0].children[1].innerHTML = body;
     modalForm.children[0].children[0].children[2].children[0].addEventListener('click', callback);
+
+    new bootstrap.Modal(modalForm).show();
 }
 
+function displayToast(body) {
+    const node = toastForm.cloneNode(true);
+    node.children[0].innerHTML = body;
+    toastArea.appendChild(node);
+    bootstrap.Toast.getOrCreateInstance(node).show();
+    
+}
 // listeners
 document.querySelector('#connect').addEventListener('click', () => {
 
     if (document.querySelector('#nickname').value === '') {
-        displyAlert('info', 'Please enter your nickname.');
+        displayAlert('info', 'Please enter your nickname.');
         return;
     }
 
@@ -153,15 +165,14 @@ document.querySelector('#connect').addEventListener('click', () => {
             nickname = document.querySelector('#nickname').value;
             setEnablity(false, '#nickname', '#connect');
             setEnablity(true, '#members', '#chatRooms', '#message', '#send');
-            displyAlert('success', `Welcomme to Group Chat Server, ${nickname}! You can close connection to click 'Close' button.`);
+            displayAlert('success', `Welcomme to Group Chat Server, ${nickname}! You can close connection to click 'Close' button.`);
             sendMessage(ws, 'Welcome', nickname);
-            console.log(ws);
         });
 
         ws.addEventListener('close', (event) => {
             if (!isClientConnected) return;
             setEnablity(false, '#members', '#chatRooms', '#message', '#send');
-            displyAlert('danger', `Server terminated. See you next time, ${nickname}!`);
+            displayAlert('danger', `Server terminated. See you next time, ${nickname}!`);
         });
 
         ws.addEventListener('message', (event) => {
@@ -169,10 +180,10 @@ document.querySelector('#connect').addEventListener('click', () => {
             const payload = JSON.parse(event.data);
             switch (payload['type']) {
                 case 'Welcome':
-                    displyAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
+                    displayAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
                     break;
                 case 'Goodbye':
-                    displyAlert('warning', `${payload['sender']} left the Chat Server.`);
+                    displayAlert('warning', `${payload['sender']} left the Chat Server.`);
                     break;
                 case 'Message':
                     displayMessage(payload);
@@ -184,6 +195,8 @@ document.querySelector('#connect').addEventListener('click', () => {
                     }
                     document.querySelector('#progress').style.display = 'none';
                     break;
+                case 'Whisper':
+                    displayAlert('secondary', `${payload['sender']} whispers to you: ${payload['message']} <a id="whisperReply">reply</a>`);
             }
         });
     } catch (e) {
@@ -204,13 +217,13 @@ document.querySelector('#send').addEventListener('click', () => {
 });
 
 document.querySelector('#members').addEventListener('click', () => {
-    // document.querySelector('#progress').style.display = 'block';
-    // sendMessage(ws, 'Members', nickname);
+    document.querySelector('#progress').style.display = 'block';
+    sendMessage(ws, 'Members', nickname);
 });
 
 // initialize
-displyAlert('info', 'To join in group chat server, please type your nickname above and click "Connect" button.');
-addMember('John Doe');
-addMember('Jane Doe');
+displayAlert('info', 'To join in group chat server, please type your nickname above and click "Connect" button.');
+// addMember('John Doe');
+// addMember('Jane Doe');
 addChatRoom('Chat Room 1');
 addChatRoom('Chat Room 2');
