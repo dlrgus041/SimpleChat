@@ -10,7 +10,7 @@
         <div class="container-fluid">
           
           <!-- left offcanvas -->
-          <button id="members" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLeft" aria-controls="offcanvasLeft">Members</button>
+          <button id="members" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLeft" aria-controls="offcanvasLeft" disabled>Members</button>
           <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasLeft" aria-labelledby="offcanvasLeftLabel">
             <div class="offcanvas-header">
               <h1 class="offcanvas-title" id="offcanvasRightLabel">Members</h1>
@@ -18,69 +18,8 @@
             </div>
             <div id="memberArea" class="offcanvas-body">
 
-              <!-- Member form -->
-              <div id="memberForm" class="info container">
-                <div class="row">
-                  <div class="col">
-                    <span class="h3 mb-0">Nickname</span>
-                  </div>
-                  <div class="col text-center">
-
-                    <!-- invite modal button -->
-                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#inviteModal" disabled>Invite</button>
-                    <!-- invite modal -->
-                    <div class="modal fade" id="inviteModal" tabindex="-1" role="dialog" aria-labelledby="inviteModalLabel" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            ...
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary">Save changes</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- invite modal-->
-
-                    <!-- whisper modal button -->
-                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#whisperModal" data-bs-dismiss="offcanvas">Whisper</button>
-                    <!-- whisper modal -->
-                    <div class="modal fade" id="whisperModal" tabindex="-1" role="dialog" aria-labelledby="whisperModalLabel" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Whisper</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            ...
-                          </div>
-                          <div class="modal-footer">
-                            <button id="whisper" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Whisper modal -->
-
-                  </div>
-                </div>
-              </div>
-              <!-- Member form -->
-
               <!-- Cicle progress bar-->
-              <div id="progress" style="display: none; position: relative; width: 100%; height: 100%;">
+              <div id="progress">
                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
                   <div class="spinner-border" style="width: 10rem; height: 10rem;" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -94,76 +33,103 @@
           <!-- left offcanvas -->
 
           <div class="d-flex mb-0">
-            <input id="nickname" class="form-control me-1" type="search" placeholder="Type your nickname" aria-label="Search">
-            <button id="connect" class="btn btn-outline-success me-1" type="button">Connect</button>
-            
-            <!-- close modal button -->
-            <button id="trigger" class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#closeModal" disabled>Close</button>
-            <!-- close modal -->
-            <div class="modal fade" id="closeModal" tabindex="-1" aria-labelledby="closeModalLabel" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">Connection will be lost. Continue?</div>
-                  <div class="modal-footer">
-                    <button id="close" type="button" class="btn btn-primary" data-bs-dismiss="modal">Yes</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <input id="nickname" class="form-control" type="search" placeholder="Type your nickname" aria-label="Search">
+            <button id="connect" class="btn btn-outline-success ms-1 me-1" type="button">Connect</button>
+            <button id="closeServerTrigger" class="btn btn-outline-danger" type="button" disabled>Close</button>
           </div>
-          <!-- close Modal -->
 
           <!-- right offcanvas -->
-          <button id="chatRooms" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">ChatRooms</button>
+          <button id="chatRooms" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" disabled>ChatRooms</button>
           <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
             <div class="offcanvas-header">
               <h1 class="offcanvas-title" id="offcanvasRightLabel">ChatRooms</h1>
               <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-          <div id="chatRoomArea" class="offcanvas-body">
-
-              <!-- ChatRoom form -->
-              <div id="chatRoomForm" class="info container">
-                <div class="row">
-                  <div class="col">
-                    <span class="h3 mb-0">ChatRoom n</span>
-                  </div>
-                  <div class="col text-center">
-                    <button class="btn btn-outline-success">Enter</button>
-                    <button class="btn btn-outline-danger">Leave</button>                    </div>
-                </div>
-              </div>
-              <!-- ChatRoom form -->
-
-            </div>
+            <div id="chatRoomArea" class="offcanvas-body"></div>
           </div>
           <!-- right offcanvas -->
+
         </div>
       </nav>
+
       <div class="container-fluid">
         <div class="container-fluid" id="groupChatArea">
-
-          <!-- Alert form -->
-          <div id="alertForm" class="alert" role="alert" style="text-align: center; display: none;"></div>
-          <!-- Alert form -->
-
-          <!-- Group chat form -->
-          <div id="groupChatForm" class="outer" style="display: none;">
-            <div class="inner" style="display: inline ;"></div>
-          </div>
-          <!-- Group chat form -->
-
         </div>
         <div class="d-flex">
-          <input id="message" class="form-control me-2" type="search" placeholder="Type messages..." aria-label="Search" disabled>
-          <button id="send" class="btn btn-dark" type="button" disabled>Send</button>
+            <!-- <div class="btn-group" style="width: 20%;">
+              <button type="button" class="btn btn-secondary">Send to</button>
+              <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item active" href="#">All(default)</a></li>
+                <li><a class="dropdown-item" href="#">Server</a></li>
+                <li><a class="dropdown-item" href="#">Whisper</a></li>
+              </ul>
+            </div> -->
+            <input id="message" class="form-control me-2" placeholder="Type message here" disabled>
+            <button id="send" class="btn btn-dark btn-lg" type="button" disabled>Send</button>
+          </div>
         </div>
       </div>
+
+<!-- Forms -->
+
+      <!-- Member form -->
+      <div id="memberForm" class="info container">
+        <div class="row">
+          <div class="col">
+            <span class="h3 mb-0">Nickname</span>
+          </div>
+          <div class="col text-center">
+            <button class="btn btn-outline-primary" data-bs-toggle="modal">Invite</button>
+            <button class="btn btn-outline-secondary" data-bs-toggle="modal">Whisper</button>
+          </div>
+        </div>
+      </div>
+      <!-- Member form -->
+
+      <!-- ChatRoom form -->
+      <div id="chatRoomForm" class="info container">
+        <div class="row">
+          <div class="col">
+            <span class="h3 mb-0">ChatRoom n</span>
+          </div>
+          <div class="col text-center">
+            <button class="btn btn-outline-success">Enter</button>
+            <button class="btn btn-outline-danger">Leave</button>
+          </div>
+        </div>
+      </div>
+      <!-- ChatRoom form -->
+
+      <!-- Alert form -->
+      <div id="alertForm" class="alert" role="alert" style="text-align: center; display: none;"></div>
+      <!-- Alert form -->
+
+      <!-- Group chat form -->
+      <div id="groupChatForm" class="outer" style="display: none;">
+        <div class="inner" style="display: inline ;"></div>
+      </div>
+      <!-- Group chat form -->
+
+      <!-- modal form -->
+      <div class="modal fade" id="modalForm" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel"></h1>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirm</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!-- modal form -->
+
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
       <script type="module" src="main.js"></script>
     </body>
