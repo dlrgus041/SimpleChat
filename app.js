@@ -1,19 +1,19 @@
 import express from 'express';
-import jade from 'jade';
 import { WebSocketServer } from 'ws';
 import { StringDecoder } from 'string_decoder';
         
 const app = express();
 
 app.use(express.static('public'));
-app.set('view engine', 'jade');
+app.set('view engine', 'ejs');
+app.set('views', 'views');
 
 app.listen(3000, () => {
     console.log('Example app listening on port 3000!');
 });
 
-app.get('/hello', (req, res) => {
-    res.render('hello');
+app.get('/chat', (req, res) => {
+    res.render('chatRoom');
 });
 
 const wss = new WebSocketServer({ port: 8080 });
