@@ -20,6 +20,8 @@ const wss = new WebSocketServer({ port: 8080 });
 const decoder = new StringDecoder('utf8');
 
 const map = new Map();
+const chatRooms = new Map();
+var id = 0;
 
 function broadcast(data) {
     for (const websocket of map.values()) {
@@ -27,12 +29,13 @@ function broadcast(data) {
     }
 }
 
-function serialize(type, sender, receiver = null, message = null) {
+function serialize(type, sender, receiver = null, message = null, chatRoomId = 0) {
     return JSON.stringify({
         'type': type,
         'sender': sender,
         'receiver': receiver,
-        'message': message
+        'message': message,
+        'chatRoomId': chatRoomId
     })
 }
 
@@ -63,7 +66,15 @@ wss.on('connection', (ws) => {
             case 'Whisper':
                 map.get(data['receiver']).send(JSON.stringify(data));
                 break;
-
+            case 'Invite':
+                map.get(data['receiver']).send(JSON.stringify(data));
+                break;
+            case 'Accept':
+                chatRooms.set(id, [data['sender'], data['receiver']]);
+                const payload = serialize('Create', data['sender'], data['receiver'], null, id++);
+                map.get(data['sender']).send(payload);
+                map.get(data['receiver']).send(payload);
+                break;
         }
     });
 });
