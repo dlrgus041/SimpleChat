@@ -1,4 +1,4 @@
-import variables from "./variables.js";
+import handler from "./handler.js";
 
 // HTML elements
 const groupChatArea = document.querySelector('#groupChatArea');
@@ -24,8 +24,8 @@ function displayAlert(type, message) {
     groupChatArea.appendChild(node);
 };
 
-function displayMessage(payload) {
-    const isMine = (payload['sender'] === variables.nickname);
+function displayMessage(payload, nickname) {
+    const isMine = (payload['sender'] === nickname);
 
     const node = groupChatForm.cloneNode(true);
     node.style.display = 'block';
@@ -44,13 +44,7 @@ function setEnablity(enablity, ...ids) {
 }
 
 function sendMessage(type, receiver = null, message = null, chatRoomId = 0) {
-    variables.ws.send(JSON.stringify({
-        'type': type,
-        'sender': variables.nickname,
-        'receiver': receiver,
-        'message': message,
-        'chatRoomId': chatRoomId
-    }));
+    handler.emit('send', type, receiver, message, chatRoomId)
 }
 
 function addMember(memberName) {
@@ -124,81 +118,6 @@ function displayToast(body, callback) {
 }
 
 // listeners
-// TODO: websocket activities(line 123 ~ line 175) will be move to "websocket.js" file.
-document.querySelector('#connect').addEventListener('click', () => {
-
-    if (document.querySelector('#nickname').value === '') {
-        displayAlert('info', 'Please enter your nickname.');
-        return;
-    }
-
-    try {
-        variables.ws = new WebSocket('ws://localhost:8080');
-
-        variables.ws.addEventListener('open', (event) => {
-            variables.isClientConnected = true;
-            variables.nickname = document.querySelector('#nickname').value;
-            setEnablity(false, '#nickname', '#connect');
-            setEnablity(true, '#members', '#chatRooms', '#message', '#send');
-            displayAlert('success', `Welcomme to Group Chat Server, ${variables.nickname}! You can close connection to click 'Close' button.`);
-            sendMessage('Welcome');
-        });
-
-        variables.ws.addEventListener('close', (event) => {
-            if (!variables.isClientConnected) return;
-            setEnablity(false, '#members', '#chatRooms', '#message', '#send');
-            displayAlert('danger', `Server terminated. See you next time, ${nickname}!`);
-        });
-
-        variables.ws.addEventListener('message', (event) => {
-
-            const payload = JSON.parse(event.data);
-            switch (payload['type']) {
-                case 'Welcome':
-                    displayAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
-                    break;
-                case 'Goodbye':
-                    displayAlert('warning', `${payload['sender']} left the Chat Server.`);
-                    break;
-                case 'Message':
-                    displayMessage(payload);
-                    break;
-                case 'Members':
-                    for (const members of payload['message']) {
-                        if (members['member'] === variables.nickname) continue;
-                        addMember(members['member']);
-                    }
-                    document.querySelector('#progress').style.display = 'none';
-                    break;
-                case 'Whisper':
-                    displayAlert('secondary', `${payload['sender']} whispers to you: ${payload['message']}`);
-                    break;
-                case 'Invite':
-                    displayToast(
-                        `${payload['sender']} invite you to chat room.`,
-                        () => {
-                            displayModal(
-                                `${payload['sender']} invite you to chat room.`,
-                                `Do you want to chat with ${payload['sender']} in chatroom?`,
-                                () => {
-                                    sendMessage('Accept', payload['sender']);
-                                }
-                            )
-                        }
-                    );
-                    break;
-                case 'Create':
-                    addChatRoom(
-                        payload['chatRoomId'],
-                        variables.nickname === payload['sender'] ? payload['receiver'] : payload['sender']
-                    );
-            }
-        });
-    } catch (e) {
-        alert('Error occured whlie connect Server. \n\n' + e);
-    }
-});
-
 document.querySelector('#send').addEventListener('click', () => {
     sendMessage('Message', null, document.querySelector('#message').value);
     document.querySelector('#message').value = '';
@@ -210,8 +129,75 @@ document.querySelector('#members').addEventListener('click', () => {
     sendMessage('Members');
 });
 
+// handlers
+handler.on('open', (nickname) => {
+    setEnablity(true, '#members', '#chatRooms', '#message', '#send');
+    displayAlert('success', `Welcomme to Group Chat Server, ${nickname}! You can close connection to click 'Close' button.`);
+    sendMessage('Welcome');
+});
+
+handler.on('close', (nickname) => {
+    setEnablity(false, '#members', '#chatRooms', '#message', '#send');
+    displayAlert('danger', `Server terminated. See you next time, ${nickname}!`);
+});
+
+handler.on('groupchat', (payload, nickname) => {
+    displayMessage(payload, nickname);
+});
+
+handler.on('message', (payload) => {
+    switch (payload['type']) {
+        case 'Welcome':
+            displayAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
+            break;
+        case 'Goodbye':
+            displayAlert('warning', `${payload['sender']} left the Chat Server.`);
+            break;
+        case 'Message':
+            displayMessage(payload);
+            break;
+        case 'Members':
+            for (const members of payload['message']) {
+                if (members['member'] === variables.nickname) continue;
+                addMember(members['member']);
+            }
+            document.querySelector('#progress').style.display = 'none';
+            break;
+        case 'Whisper':
+            displayAlert('secondary', `${payload['sender']} whispers to you: ${payload['message']}`);
+            break;
+        case 'Invite':
+            displayToast(
+                `${payload['sender']} invite you to chat room.`,
+                () => {
+                    displayModal(
+                        `${payload['sender']} invite you to chat room.`,
+                        `Do you want to chat with ${payload['sender']} in chatroom?`,
+                        () => {
+                            sendMessage('Accept', payload['sender']);
+                        }
+                    )
+                }
+            );
+            break;
+        case 'Create':
+            addChatRoom(
+                payload['chatRoomId'],
+                variables.nickname === payload['sender'] ? payload['receiver'] : payload['sender']
+            );
+            break;
+    }
+})
+
 // initialize
-displayAlert('info', 'To join in group chat server, please type your nickname above and click "Connect" button.');
+displayModal(
+    'Welcome to Group Chat Server',
+    `<input id="nickname" class="form-control" placeholder="Please type your nickname here and click 'Confirm'.">`,
+    () => {
+        const nickname = document.querySelector('#nickname').value;
+        handler.emit('connect', nickname);
+    }
+);
 // addMember('John Doe');
 // addMember('Jane Doe');
 // addChatRoom('Chat Room 1');

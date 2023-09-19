@@ -1,6 +1,4 @@
 import express from 'express';
-import { Worker } from 'node:worker_threads';
-import { WebSocketServer } from 'ws';
 import { StringDecoder } from 'string_decoder';
         
 const app = express();
@@ -22,7 +20,7 @@ const decoder = new StringDecoder('utf8');
 
 const map = new Map();
 const chatRooms = new Map();
-var id = 0;
+var id = 1;
 
 function broadcast(data) {
     for (const websocket of map.values()) {
@@ -72,9 +70,8 @@ wss.on('connection', (ws) => {
                 break;
             case 'Accept':
                 chatRooms.set(id, [data['sender'], data['receiver']]);
-                const payload = serialize('Create', data['sender'], data['receiver'], null, id++);
-                map.get(data['sender']).send(payload);
-                map.get(data['receiver']).send(payload);
+                map.get(data['sender']).send(serialize('Create', data['receiver']));
+                map.get(data['receiver']).send(serialize('Create', data['sender']));
                 break;
         }
     });
