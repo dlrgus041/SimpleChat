@@ -31,23 +31,15 @@ manager.addEventListener('connect', (e) => {
 
     ws.addEventListener('message', (event) => {
         const payload = JSON.parse(event.data);
-        if (payload[type] == 'Message') {
-            manager.dispatchEvent(new CustomEvent(
-                payload[chatRoomId] > 0 ? 'chatroom' : 'groupchat',
-                {
-                    detail: {
-                        paylord: payload,
-                        name: nickname
-                    }
-                }
-            ));
-        } else {
-            manager.dispatchEvent(new CustomEvent('action', {
+        manager.dispatchEvent(new CustomEvent(
+            payload.type !== 'Message' ? 'action' : payload.chatRoomId > 0 ? 'chatroom' : 'groupchat',
+            {
                 detail: {
-                    payload:payload
+                    payload: payload,
+                    name: nickname
                 }
-            }));
-        }
+            }
+        ));
     });
 });
 

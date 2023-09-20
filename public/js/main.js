@@ -13,6 +13,8 @@ const chatRoomForm = document.querySelector('#chatRoomForm');
 const modalForm = document.querySelector('#modalForm');
 const toastForm = document.querySelector('#toastForm');
 
+const progressbar = document.querySelector('#progress');
+
 const chatRooms = new Map();
 
 // functions
@@ -26,16 +28,16 @@ function displayAlert(type, message) {
 
 function displayMessage(data) {
     const payload = data.payload;
-    const isMine = (payload['sender'] === data.name);
+    const isMine = (payload.sender === data.name);
 
     const node = groupChatForm.cloneNode(true);
     node.style.display = 'block';
     node.style.textAlign = isMine ? 'right' : 'left';
 
     node.children[0].classList.add(isMine ? 'mine' : 'other');
-    node.children[0].innerHTML = (isMine? '' : (payload['sender'] + ': ')) + payload['message'];
+    node.children[0].innerHTML = (isMine? '' : (payload.sender + ': ')) + payload.message;
 
-    elements.groupChatArea.appendChild(node);
+    groupChatArea.appendChild(node);
 };
 
 function setEnablity(enablity, ...ids) {
@@ -100,10 +102,8 @@ function addChatRoom(chatRoomId, chatRoomName) {
 
     node.children[0].children[0].children[0].innerHTML = chatRoomName;
     // node.children[0].children[1].children[0].addEventListener('click', () => {
-    //     sendMessage('Invite', member);
     // });
     // node.children[0].children[1].children[1].addEventListener('click', () => {
-    //     sendMessage('Whisper', member);
     // });
     
     chatRooms.set(chatRoomId, node);
@@ -133,14 +133,15 @@ document.querySelector('#send').addEventListener('click', () => {
 
 document.querySelector('#members').addEventListener('click', () => {
     clearMember();
-    document.querySelector('#progress').style.display = 'block';
+    memberArea.appendChild(progressbar);
+    progressbar.style.display = 'block';
     sendMessage('Members');
 });
 
 // managers
 manager.addEventListener('open', (e) => {
     setEnablity(true, '#members', '#chatRooms', '#message', '#send');
-    displayAlert('success', `Welcomme to Group Chat Server, ${e.detail.name}! You can close connection to click 'Close' button.`);
+    displayAlert('success', `Welcomme to Group Chat Server, ${e.detail.name}!`);
     sendMessage('Welcome');
 });
 
@@ -154,45 +155,42 @@ manager.addEventListener('groupchat', (e) => {
 });
 
 manager.addEventListener('action', (e) => {
-    switch (e.detail.payload[type]) {
+    switch (e.detail.payload.type) {
         case 'Welcome':
-            displayAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
+            displayAlert('success', `${e.detail.payload.sender} joins the Chat Server. Say Hello to ${e.detail.payload.sender}!`);
             break;
         case 'Goodbye':
-            displayAlert('warning', `${payload['sender']} left the Chat Server.`);
+            displayAlert('warning', `${e.detail.payload.sender} left the Chat Server.`);
             break;
         case 'Message':
-            displayMessage(payload);
+            displayMessage(e.detail.payload);
             break;
         case 'Members':
-            for (const members of payload['message']) {
-                if (members['member'] === variables.nickname) continue;
-                addMember(members['member']);
+            for (const members of e.detail.payload.message) {
+                if (members.member === e.detail.name) continue;
+                addMember(members.member);
             }
-            document.querySelector('#progress').style.display = 'none';
+            progressbar.style.display = 'none';
             break;
         case 'Whisper':
-            displayAlert('secondary', `${payload['sender']} whispers to you: ${payload['message']}`);
+            displayAlert('secondary', `${e.detail.payload.sender} whispers to you: ${e.detail.payload.message}`);
             break;
         case 'Invite':
             displayToast(
-                `${payload['sender']} invite you to chat room.`,
+                `${e.detail.payload.sender} invite you to chat room.`,
                 () => {
                     displayModal(
-                        `${payload['sender']} invite you to chat room.`,
-                        `Do you want to chat with ${payload['sender']} in chatroom?`,
+                        `${e.detail.payload.sender} invite you to chat room.`,
+                        `Do you want to chat with ${e.detail.payload.sender} in chatroom?`,
                         () => {
-                            sendMessage('Accept', payload['sender']);
+                            sendMessage('Accept', e.detail.payload.sender);
                         }
                     )
                 }
             );
             break;
         case 'Create':
-            addChatRoom(
-                payload['chatRoomId'],
-                variables.nickname === payload['sender'] ? payload['receiver'] : payload['sender']
-            );
+            addChatRoom(e.detail.payload.chatRoomId, e.detail.payload.sender);
             break;
     }
 })

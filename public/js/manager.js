@@ -24,7 +24,7 @@ const manager = new EventTarget();
 //
 // 6. action
 // - when action(execpt message) is fired.
-// detail: {paylord[JSON]}
+// detail: {paylord[JSON], name[string]}
 //
 // 7. send
 // - when client send message or actions.
