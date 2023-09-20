@@ -1,4 +1,4 @@
-import handler from './handler.js';
+import manager from './manager.js';
 
 let ws = null;
 let nickname = '';
@@ -6,37 +6,59 @@ let isClientConnected = false;
 let waitInviteReply = false;
 let location = -1; // 0 = group chat, others = in chatroom
 
-handler.on('connect', (str) => {
+manager.addEventListener('connect', (e) => {
 
     ws = new WebSocket('ws://localhost:8080');
 
     ws.addEventListener('open', () => {
         isClientConnected = true;
-        nickname = str;
-        handler.emit('open', nickname);
+        nickname = e.detail.name;
+        manager.dispatchEvent(new CustomEvent('open', {
+            detail: {
+                name: nickname
+            }
+        }));
     });
 
     ws.addEventListener('close', () => {
         if (!isClientConnected) return;
-        else handler.emit('close', nickname);
+        else manager.dispatchEvent(new CustomEvent('close', {
+            detail: {
+                name: nickname
+            }
+        }));
     });
 
     ws.addEventListener('message', (event) => {
         const payload = JSON.parse(event.data);
-        if (payload['type'] == 'Message') {
-            if (payload['chatRoomId'] > 0) handler.emit('chatroom', payload, nickname);
-            else handler.emit('groupchat', payload, nickname);
-        } else handler.emit('message', payload);
-    }
-    );
+        if (payload[type] == 'Message') {
+            manager.dispatchEvent(new CustomEvent(
+                payload[chatRoomId] > 0 ? 'chatroom' : 'groupchat',
+                {
+                    detail: {
+                        paylord: payload,
+                        name: nickname
+                    }
+                }
+            ));
+        } else {
+            manager.dispatchEvent(new CustomEvent('action', {
+                detail: {
+                    payload:payload
+                }
+            }));
+        }
+    });
 });
 
-handler.on('send', (type, receiver, message, chatRoomId) => {
+manager.addEventListener('send', (e) => {
     ws.send(JSON.stringify({
-        'type': type,
-        'sender': nickname,
-        'receiver': receiver,
-        'message': message,
-        'chatRoomId': chatRoomId
+        type: e.detail.type,
+        sender: nickname,
+        receiver: e.detail.receiver,
+        message: e.detail.message,
+        chatRoomId: e.detail.chatRoomId
     }));
 });
+
+export default manager;

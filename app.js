@@ -1,5 +1,4 @@
 import express from 'express';
-import { Worker } from 'node:worker_threads';
 import { WebSocketServer } from 'ws';
 import { StringDecoder } from 'string_decoder';
         
@@ -11,6 +10,10 @@ app.set('views', 'views');
 
 app.listen(3000, () => {
     console.log('Example app listening on port 3000!');
+});
+
+app.get('/', (req, res) => {
+    res.render('main');
 });
 
 app.get('/chat', (req, res) => {

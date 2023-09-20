@@ -1,4 +1,4 @@
-import handler from "./handler.js";
+import manager from "./websocket.js";
 
 // HTML elements
 const groupChatArea = document.querySelector('#groupChatArea');
@@ -24,8 +24,9 @@ function displayAlert(type, message) {
     groupChatArea.appendChild(node);
 };
 
-function displayMessage(payload, nickname) {
-    const isMine = (payload['sender'] === nickname);
+function displayMessage(data) {
+    const payload = data.payload;
+    const isMine = (payload['sender'] === data.name);
 
     const node = groupChatForm.cloneNode(true);
     node.style.display = 'block';
@@ -44,7 +45,14 @@ function setEnablity(enablity, ...ids) {
 }
 
 function sendMessage(type, receiver = null, message = null, chatRoomId = 0) {
-    handler.emit('send', type, receiver, message, chatRoomId)
+    manager.dispatchEvent(new CustomEvent('send', {
+        detail: {
+            type: type,
+            receiver: receiver,
+            message: message,
+            chatRoomId: chatRoomId
+        }
+    }));
 }
 
 function addMember(memberName) {
@@ -129,24 +137,24 @@ document.querySelector('#members').addEventListener('click', () => {
     sendMessage('Members');
 });
 
-// handlers
-handler.on('open', (nickname) => {
+// managers
+manager.addEventListener('open', (e) => {
     setEnablity(true, '#members', '#chatRooms', '#message', '#send');
-    displayAlert('success', `Welcomme to Group Chat Server, ${nickname}! You can close connection to click 'Close' button.`);
+    displayAlert('success', `Welcomme to Group Chat Server, ${e.detail.name}! You can close connection to click 'Close' button.`);
     sendMessage('Welcome');
 });
 
-handler.on('close', (nickname) => {
+manager.addEventListener('close', (e) => {
     setEnablity(false, '#members', '#chatRooms', '#message', '#send');
-    displayAlert('danger', `Server terminated. See you next time, ${nickname}!`);
+    displayAlert('danger', `Server terminated. See you next time, ${e.detail.name}!`);
 });
 
-handler.on('groupchat', (payload, nickname) => {
-    displayMessage(payload, nickname);
+manager.addEventListener('groupchat', (e) => {
+    displayMessage(e.detail);
 });
 
-handler.on('message', (payload) => {
-    switch (payload['type']) {
+manager.addEventListener('action', (e) => {
+    switch (e.detail.payload[type]) {
         case 'Welcome':
             displayAlert('success', `${payload['sender']} joins the Chat Server. Say Hello to ${payload['sender']}!`);
             break;
@@ -195,7 +203,11 @@ displayModal(
     `<input id="nickname" class="form-control" placeholder="Please type your nickname here and click 'Confirm'.">`,
     () => {
         const nickname = document.querySelector('#nickname').value;
-        handler.emit('connect', nickname);
+        manager.dispatchEvent(new CustomEvent('connect', {
+            detail: {
+                name: nickname
+            }
+        }));
     }
 );
 // addMember('John Doe');
