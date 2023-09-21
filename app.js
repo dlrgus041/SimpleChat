@@ -1,13 +1,15 @@
 import express from 'express';
 import session from 'express-session';
+import signature from 'cookie-signature';
 import { WebSocketServer } from 'ws';
 import { StringDecoder } from 'string_decoder';
         
 const app = express();
+const secret = 'The quick brown fox jumps over the lazy dog.';
 
 app.use(express.static('public'));
 app.use(session({
-    secret: '299792458',
+    secret: secret,
     resave: false,
     saveUninitialized: true
   }));

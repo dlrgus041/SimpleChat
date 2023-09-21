@@ -113,16 +113,16 @@ function addChatRoom(chatRoomId, chatRoomName) {
 function displayModal(title, body, callback) {
     modalForm.children[0].children[0].children[0].children[0].innerHTML = title;
     modalForm.children[0].children[0].children[1].innerHTML = body;
-    modalForm.children[0].children[0].children[2].children[0].addEventListener('click', callback);
+    modalForm.children[0].children[0].children[2].children[0].addEventListener('click', callback, {once: true});
     new bootstrap.Modal(modalForm).show();
 }
 
-function displayToast(body, callback) {
+function displayToast(body, callback = null) {
     const node = toastForm.cloneNode(true);
-    node.addEventListener('click', callback);
-    node.children[0].innerHTML = body;
+    if (callback !== null) node.addEventListener('click', callback);
+    node.children[0].children[0].innerHTML = body;
     toastArea.appendChild(node);
-    bootstrap.Toast.getOrCreateInstance(node).show();    
+    bootstrap.Toast.getOrCreateInstance(node).show();
 }
 
 // listeners
