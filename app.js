@@ -7,6 +7,8 @@ import { StringDecoder } from 'string_decoder';
 const app = express();
 const secret = 'The quick brown fox jumps over the lazy dog.';
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(session({
     secret: secret,
@@ -21,45 +23,55 @@ app.listen(3000, () => {
     console.log('Example app listening on port 3000!');
 });
 
-app.get('/', (req, res) => {
-    console.log(req.session.id);
+app.get('/main', (req, res) => {
     res.render('main');
 });
 
-app.get('/chat', (req, res) => {
+app.post('/chatroom', (req, res) => {
+    console.log(req.body);
     res.render('chatRoom');
 });
 
 const wss = new WebSocketServer({ port: 8080 });
-const decoder = new StringDecoder('utf8');
 
-const map = new Map();
-const chatRooms = new Map();
+const websocketMap = new Map(); // <String, WebSocket>
+const chatRoomMember = new Map(); // <Number, Set<String>>
+const chatRoomMsg = new Map(); // <Number, Array<JSON>>
 var id = 0;
 
+function send(receiver, msg) {
+    websocketMap.get(receiver).send(JSON.stringify(msg));
+}
+
 function broadcast(data) {
-    for (const websocket of map.values()) {
+    for (const websocket of websocketMap.values()) {
         websocket.send(JSON.stringify(data));
     }
 }
 
-function serialize(type, sender, receiver = null, message = null, chatRoomId = 0) {
-    return JSON.stringify({
-        'type': type,
-        'sender': sender,
-        'receiver': receiver,
-        'message': message,
-        'chatRoomId': chatRoomId
-    })
+function toJSON(type, sender = null, receiver = null, message = null, chatRoomId = 0) {
+    return {
+        type: type,
+        sender: sender,
+        receiver: receiver,
+        message: message,
+        chatRoomId: chatRoomId
+    }
+}
+
+function storeMsg(data, chatRoomId = 0) {
+    chatRoomMsg.get(chatRoomId).push(data);
+}
+
+function restoreMsg(receiver, chatRoomId = 0) {
+    send(receiver, toJSON())
 }
 
 wss.on('connection', (ws, req) => {
 
-    console.log(req.headers.cookie);
-
     ws.on('close', (code, reason) => {
-        map.delete(reason.toString());
-        broadcast(serialize('Goodbye', reason.toString()));
+        websocketMap.delete(reason.toString());
+        broadcast(toJSON('Goodbye', reason.toString()));
     });
   
     ws.on('message', (rawdata) => {
@@ -67,29 +79,51 @@ wss.on('connection', (ws, req) => {
         switch (data.type) {
             case 'Welcome':
                 broadcast(data);
-                map.set(data.sender, ws);
+                storeMsg(data);
+                websocketMap.set(data.sender, ws);
                 break;
             case 'Message':
-                broadcast(data);
+                if (data.chatRoomId == -1) { // message from client to server
+                    storeMsg(data);
+                } else if (data.chatRoomId == 0) {
+                    broadcast(data);
+                    storeMsg(data);
+                } else {
+                    for (const member of chatRoomMember.get(data.chatRoomId)) {
+                        send(member, data);
+                    }
+                    storeMsg(data, data.chatRoomId);
+                }
                 break;
             case 'Members':
                 data.message = [];
-                for (const member of map.keys()) {
+                for (const member of (data.chatRoomId > 0 ? chatRoomMember.get(data.chatRoomId) : websocketMap.keys())) {
                     data.message.push({ member : member });
                 }
-                map.get(data.sender).send(JSON.stringify(data));
+                send(data.sender, data);
                 break;
             case 'Whisper':
-                map.get(data.receiver).send(JSON.stringify(data));
+                send(data.receiver, data);
+                storeMsg(data);
                 break;
             case 'Invite':
-                map.get(data.receiver).send(JSON.stringify(data));
+                data.chatRoomId = ++id;
+                chatRoomMsg.set(data.chatRoomId, []);
+                chatRoomMember.set(data.chatRoomId, new Set([data.sender, data.receiver]));
+                send(data.sender, data);
+                send(data.receiver, data);
                 break;
-            case 'Accept':
-                chatRooms.set(id, [data.sender, data.receiver]);
-                map.get(data.sender).send(serialize('Create', data.receiver, null, null, id++));
-                map.get(data.receiver).send(serialize('Create', data.sender, null, null, id++));
-                break;
+            // case 'Leave':
+            //     chatRoomMember.get(data.chatRoomId).delete(data.sender);
+            //     if (chatRoomMember.get(data.chatRoomId).size != 0) {
+            //         for (const member of chatRoomMember.get(data.chatRoomId)) {
+            //             send(member, data)
+            //         }
+            //     } else chatRoomMember.delete(data.chatRoomId);
+            //     break;
         }
     });
 });
+
+// initailize
+chatRoomMsg.set(0, []);

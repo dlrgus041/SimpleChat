@@ -56,3 +56,11 @@
 li {
     list-style-type: none;
 }
+
+.modal-footer {
+    justify-content: center;
+}
+
+.chat-area {
+    cursor: pointer;
+}

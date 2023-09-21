@@ -1,6 +1,4 @@
-const manager = new EventTarget();
-
-// events
+// manager events
 //
 // 1. connect
 // - when client type nickname and click 'Confirm' button.
@@ -25,9 +23,3 @@ const manager = new EventTarget();
 // 6. action
 // - when action(execpt message) is fired.
 // detail: {paylord[JSON], name[string]}
-//
-// 7. send
-// - when client send message or actions.
-// detail: {type[string], sender[string], receiver[string], message[string], chatRoomId[number]}
-
-export default manager;
