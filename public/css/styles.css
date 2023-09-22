@@ -2,14 +2,6 @@
     box-sizing: content-box;
 }
 
-#groupChatArea {
-    background-color: #FBCEB1;
-    height: 80vh;
-    margin-bottom: 10px;
-    padding: 10px;
-    overflow: auto;
-}
-
 #Members, #ChatRooms {
     color: white;
 }
@@ -62,5 +54,13 @@ li {
 }
 
 .chat-area {
+    background-color: #FBCEB1;
+    height: 80vh;
+    margin-bottom: 10px;
+    padding: 10px;
+    overflow: auto;
+}
+
+#chatRoomForm {
     cursor: pointer;
 }

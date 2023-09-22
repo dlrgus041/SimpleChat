@@ -9,6 +9,7 @@ const secret = 'The quick brown fox jumps over the lazy dog.';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(express.static('public'));
 app.use(session({
     secret: secret,
@@ -27,16 +28,20 @@ app.get('/main', (req, res) => {
     res.render('main');
 });
 
+app.get('/chatroom', (req, res) => {
+    res.send('It is the wrong approach. Please proceed again from the beginning.Sorry for the inconvenience in the use of the service. Please use the from scratch.')
+})
+
 app.post('/chatroom', (req, res) => {
-    console.log(req.body);
-    res.render('chatRoom');
+    console.log(req.body)
+    res.render('chatRoom', req.body);
 });
 
 const wss = new WebSocketServer({ port: 8080 });
 
 const websocketMap = new Map(); // <String, WebSocket>
 const chatRoomMember = new Map(); // <Number, Set<String>>
-const chatRoomMsg = new Map(); // <Number, Array<JSON>>
+const chatMessages = new Map(); // <Number, Array<JSON>>
 var id = 0;
 
 function send(receiver, msg) {
@@ -59,12 +64,12 @@ function toJSON(type, sender = null, receiver = null, message = null, chatRoomId
     }
 }
 
-function storeMsg(data, chatRoomId = 0) {
-    chatRoomMsg.get(chatRoomId).push(data);
+function saveMsg(data, chatRoomId = 0) {
+    chatMessages.get(chatRoomId).push(data);
 }
 
-function restoreMsg(receiver, chatRoomId = 0) {
-    send(receiver, toJSON())
+function restoreMsg(receiver, chatRoomId) {
+    send(receiver, toJSON('Initial', 'Server', 'Server', chatMessages.get(chatRoomId), chatRoomId))
 }
 
 wss.on('connection', (ws, req) => {
@@ -77,22 +82,24 @@ wss.on('connection', (ws, req) => {
     ws.on('message', (rawdata) => {
         const data = JSON.parse(rawdata);
         switch (data.type) {
+            case 'Initial':
+                websocketMap.set(data.sender, ws);
+                restoreMsg(data.sender, data.chatRoomId);
+                break;
             case 'Welcome':
                 broadcast(data);
-                storeMsg(data);
-                websocketMap.set(data.sender, ws);
                 break;
             case 'Message':
                 if (data.chatRoomId == -1) { // message from client to server
-                    storeMsg(data);
+                    saveMsg(data);
                 } else if (data.chatRoomId == 0) {
                     broadcast(data);
-                    storeMsg(data);
+                    saveMsg(data);
                 } else {
                     for (const member of chatRoomMember.get(data.chatRoomId)) {
                         send(member, data);
                     }
-                    storeMsg(data, data.chatRoomId);
+                    saveMsg(data, data.chatRoomId);
                 }
                 break;
             case 'Members':
@@ -104,11 +111,11 @@ wss.on('connection', (ws, req) => {
                 break;
             case 'Whisper':
                 send(data.receiver, data);
-                storeMsg(data);
+                send(data.sender, data);
                 break;
             case 'Invite':
                 data.chatRoomId = ++id;
-                chatRoomMsg.set(data.chatRoomId, []);
+                chatMessages.set(data.chatRoomId, []);
                 chatRoomMember.set(data.chatRoomId, new Set([data.sender, data.receiver]));
                 send(data.sender, data);
                 send(data.receiver, data);
@@ -126,4 +133,4 @@ wss.on('connection', (ws, req) => {
 });
 
 // initailize
-chatRoomMsg.set(0, []);
+chatMessages.set(0, []);
