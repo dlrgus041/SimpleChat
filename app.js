@@ -33,8 +33,7 @@ app.get('/chatroom', (req, res) => {
 })
 
 app.post('/chatroom', (req, res) => {
-    console.log(req.body)
-    res.render('chatRoom', req.body);
+    res.render('chatroom');
 });
 
 const wss = new WebSocketServer({ port: 8080 });
@@ -69,7 +68,7 @@ function saveMsg(data, chatRoomId = 0) {
 }
 
 function restoreMsg(receiver, chatRoomId) {
-    send(receiver, toJSON('Initial', 'Server', 'Server', chatMessages.get(chatRoomId), chatRoomId))
+    send(receiver, toJSON('Initial', null, null, chatMessages.get(chatRoomId), chatRoomId))
 }
 
 wss.on('connection', (ws, req) => {
@@ -83,14 +82,14 @@ wss.on('connection', (ws, req) => {
         const data = JSON.parse(rawdata);
         switch (data.type) {
             case 'Initial':
-                websocketMap.set(data.sender, ws);
+                if (data.chatRoomId == 0) websocketMap.set(data.sender, ws);
                 restoreMsg(data.sender, data.chatRoomId);
                 break;
             case 'Welcome':
                 broadcast(data);
                 break;
             case 'Message':
-                if (data.chatRoomId == -1) { // message from client to server
+                if (data.receiver === 'server') {
                     saveMsg(data);
                 } else if (data.chatRoomId == 0) {
                     broadcast(data);

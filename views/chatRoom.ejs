@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
     <head>
         <title>ChatRoom</title>
@@ -8,38 +9,18 @@
     <body>
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
-                <span class="navbar-brand mb-0 h1"><%= name %></span>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Link</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Dropdown
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Action</a></li>
-                                <li><a class="dropdown-item" href="#">Another action</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#">Something else here</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-                        </li>
-                    </ul>
-                    <form class="d-flex" role="search">
-                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                        <button class="btn btn-outline-success" type="submit">Search</button>
-                    </form>
+                <span id="chatRoomName" class="navbar-brand mb-0 h1">ChatRoom</span>
+                
+                <!-- right offcanvas -->
+                <button id="members" class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight" disabled>Members</button>
+                <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+                    <div class="offcanvas-header">
+                        <h1 class="offcanvas-title" id="offcanvasRightLabel">Members</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                    </div>
+                    <div id="memberArea" class="offcanvas-body"></div>
                 </div>
+                <!-- right offcanvas -->
             </div>
         </nav>
 
@@ -65,17 +46,25 @@
         </div>
 
         <!-- toast container -->
-        <div id="toastArea" class="toast-container position-fixed bottom-0 end-0 p-5"></div>
+        <div id="toastArea" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+<!-- Forms -->
+
+        <!-- Member form -->
+        <div id="memberForm" class="info container">
+            <span class="h3 mb-0">Nickname</span>
+        </div>
+        <!-- Member form -->
 
         <!-- Alert form -->
         <div id="alertForm" class="alert" role="alert" style="text-align: center; display: none;"></div>
         <!-- Alert form -->
   
-        <!-- Group chat form -->
+        <!-- chat form -->
         <div id="chatForm" class="outer" style="display: none;">
             <div class="inner" style="display: inline ;"></div>
         </div>
-        <!-- Group chat form -->
+        <!-- chat form -->
   
         <!-- modal form -->
         <div class="modal fade" id="modalForm" tabindex="-1" aria-hidden="true">

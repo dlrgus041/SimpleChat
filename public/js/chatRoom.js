@@ -1,4 +1,4 @@
-import { manager, chatRoomMap, sendMessage } from './background.js';
+import { manager, sendMessage, chatRoomMap, getFocused } from './background.js';
 
 // HTML elements
 const chatArea = document.querySelector('#chatArea');
@@ -10,6 +10,8 @@ const alertForm = document.querySelector('#alertForm');
 const memberForm = document.querySelector('#memberForm');
 const modalForm = document.querySelector('#modalForm');
 const toastForm = document.querySelector('#toastForm');
+
+const chatRoomId = getFocused();
 
 // functions
 function displayAlert(type, message) {
@@ -41,39 +43,10 @@ function setEnablity(enablity, ...ids) {
 }
 
 function addMember(memberName) {
-
     const node = memberForm.cloneNode(true);
     node.style.display = 'block';
     node.children[0].children[0].children[0].innerHTML = memberName;
-
-    node.children[0].children[1].children[0].addEventListener('click', () => {
-        displayModal(
-            `Invite ${memberName}`,
-            `New chatroom will be made and invite ${memberName}. Continue?`,
-            () => {
-                sendMessage('Invite', memberName);
-            }
-        );
-    });
-
-    node.children[0].children[1].children[1].addEventListener('click', () => {
-        displayModal(
-            `Whisper to ${memberName}`,
-            `<input id="whisperMessage" class="form-control ms-2 me-2" placeholder="Type whisper message here">`,
-            () => {
-                const message = document.querySelector('#whisperMessage').value;
-                sendMessage('Whisper', memberName, message);
-                displayToast(`Succefully whispered to ${memberName}.`);
-                displayAlert('secondary', `Whispers to ${memberName}: ${message}`);
-            }
-        );
-    });
-
     memberArea.appendChild(node);
-}
-
-function clearMember() {
-    memberArea.textContent = '';
 }
 
 function displayModal(title, body, callback, singleBtn = false) {
@@ -97,21 +70,31 @@ function displayToast(body, callback = null) {
     bootstrap.Toast.getOrCreateInstance(node).show();
 }
 
+// addEventListener
+document.querySelector('#send').addEventListener('click', () => {
+    sendMessage('Message', null, document.querySelector('#message').value, chatRoomId);
+    document.querySelector('#message').value = '';
+});
+
+// document.addEventListener("visibilitychange", () => {
+//     if (document.visibilityState === 'visible') {
+//         focusedChatRoom = chatRoomId;
+//     }
+// });
+
 // manager
-manager.addEventListener('chatroom', (e) => {
-    displayMessage(e.detail);
+manager.addEventListener('chat', (e) => {
+    if (e.detail.payload.chatRoomId == chatRoomId) displayMessage(e.detail);
+    else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatRoomMap.get(e.detail.payload.chatRoomId)}.`);
 });
 
 manager.addEventListener('action', (e) => {
     switch (e.detail.payload.type) {
-        // case 'Welcome':
-        //     displayAlert('success', `${e.detail.payload.sender} joins the Chat Server. Say Hello to ${e.detail.payload.sender}!`);
-        //     break;
+        case 'Initial':
+            setEnablity(true, '#members', '#message', '#send');
+            break;
         // case 'Goodbye':
         //     displayAlert('warning', `${e.detail.payload.sender} left the Chat Server.`);
-        //     break;
-        // case 'Message':
-        //     displayMessage(e.detail.payload);
         //     break;
         // case 'Members':
         //     for (const members of e.detail.payload.message) {
@@ -136,3 +119,6 @@ manager.addEventListener('action', (e) => {
         //     break;
     }
 })
+
+// initialize
+// sendMessage('Initial', null, null, chatRoomId);

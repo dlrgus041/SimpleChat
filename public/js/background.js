@@ -6,10 +6,12 @@ class SignalEmitter extends EventTarget {
 
 const manager = new SignalEmitter();
 const chatRoomMap = new Map(); // <Number, String>
+chatRoomMap.set(0, 'Group Chat');
 
 let ws = null;
 let nickname = '';
 let isClientConnected = false;
+let focused = 0;
 
 // class Signal {
 //     static connect = new CustomEvent('connect', {detail: {name: nickname}});
@@ -38,9 +40,9 @@ manager.addEventListener('connect', (e) => {
     ws.addEventListener('message', (event) => {
         const payload = JSON.parse(event.data);
         if (payload.type === 'Initial') {
-            for (const msg of payload.message) { manager.emit((payload.chatRoomId > 0 ? 'private' : 'group'), {name: nickname, payload: msg}); }
+            for (const msg of payload.message) { manager.emit('chat', {name: nickname, payload: msg}); }
             manager.emit('action', {name: nickname, payload: payload})
-        } else manager.emit((payload.type !== 'Message' ? 'action' : payload.chatRoomId > 0 ? 'private' : 'group'), {name: nickname, payload: payload});
+        } else manager.emit((payload.type !== 'Message' ? 'action' : 'chat'), {name: nickname, payload: payload});
     });
 });
 
@@ -54,14 +56,25 @@ function sendMessage(type, receiver = null, message = null, chatRoomId = 0) {
     }));
 };
 
-// function copy(obj) {
-//     if(typeof obj !== "object" || obj === null) return obj;
-    
-//     ret = {};    
-//     for(const key in obj) ret[key] = copy(obj[key]);
-//     return ret;
-// }
+async function enterChatRoom(url, params) {
+    fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(params),
+    }).then((response) => response.text())
+    .then((data) => console.log(data));
+}
+
+function getFocused() {
+    return focused;
+}
+
+function setFocused(num) {
+    focused = num;
+}
 
 export {
-    manager, chatRoomMap, sendMessage
-};
+    manager, chatRoomMap, sendMessage, getFocused, setFocused
+}

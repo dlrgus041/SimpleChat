@@ -1,4 +1,4 @@
-import { manager, chatRoomMap, sendMessage } from './background.js';
+import { manager, chatRoomMap, sendMessage, setFocused } from './background.js';
 
 // HTML elements
 const groupChatArea = document.querySelector('#groupChatArea');
@@ -85,6 +85,7 @@ function addChatRoom(chatRoomId) {
     chatRoomMap.set(chatRoomId, `ChatRoom ${chatRoomId}`);
 
     node.addEventListener('click', () => {
+        setFocused(chatRoomId);
         enterChatRoom('/chatroom', {
             id: chatRoomId,
             name: chatRoomMap.get(chatRoomId) 
@@ -167,6 +168,12 @@ document.querySelector('#members').addEventListener('click', () => {
     sendMessage('Members');
 });
 
+// document.addEventListener("visibilitychange", () => {
+//     if (document.visibilityState == 'visible') {
+//         focusedChatRoom = 0;
+//     }
+// });
+
 // managers
 manager.addEventListener('open', (e) => {
     sendMessage('Initial');
@@ -177,8 +184,9 @@ manager.addEventListener('close', (e) => {
     displayAlert('danger', `Server terminated. See you next time, ${e.detail.name}!`);
 });
 
-manager.addEventListener('group', (e) => {
-    displayMessage(e.detail);
+manager.addEventListener('chat', (e) => {
+    if (e.detail.payload.chatRoomId == 0) displayMessage(e.detail);
+    else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatRoomMap.get(e.detail.payload.chatRoomId)}.`);
 });
 
 manager.addEventListener('action', (e) => {
