@@ -59,8 +59,6 @@ li {
     margin-bottom: 10px;
     padding: 10px;
     overflow: auto;
-    display: flex;
-    flex-direction: column-reverse;
 }
 
 #chatRoomForm {

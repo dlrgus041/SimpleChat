@@ -1,4 +1,5 @@
-import { manager, chatRoomMap, sendMessage, setFocused } from './background.js';
+const workerWatchdog = new EventTarget();
+let worker = null;
 
 // HTML elements
 const groupChatArea = document.querySelector('#groupChatArea');
@@ -16,6 +17,16 @@ const toastForm = document.querySelector('#toastForm');
 const progressbar = document.querySelector('#progress');
 
 // functions
+function sendMessage(type, sender = null, receiver = null, message = null, chatRoomId = 0) {
+    worker?.port.postMessage({
+        type: type,
+        sender: sender,
+        receiver: receiver,
+        message: message,
+        chatRoomId: chatRoomId
+    });
+}
+
 function displayAlert(type, message) {
     const node = alertForm.cloneNode(true);
     node.style.display = 'block';
@@ -174,65 +185,69 @@ document.querySelector('#members').addEventListener('click', () => {
 //     }
 // });
 
-// managers
-manager.addEventListener('open', (e) => {
-    sendMessage('Initial');
-});
+// worker using watchdog
+workerWatchdog.addEventListener('worker', () => {
+    worker.port.onmessage = (e) => {
 
-manager.addEventListener('close', (e) => {
-    setEnablity(false, '#members', '#chatRooms', '#message', '#send');
-    displayAlert('danger', `Server terminated. See you next time, ${e.detail.name}!`);
-});
-
-manager.addEventListener('chat', (e) => {
-    if (e.detail.payload.chatRoomId == 0) displayMessage(e.detail);
-    else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatRoomMap.get(e.detail.payload.chatRoomId)}.`);
-});
-
-manager.addEventListener('action', (e) => {
-    switch (e.detail.payload.type) {
-        case 'Initial':
-            setEnablity(true, '#members', '#chatRooms', '#message', '#send');
-            sendMessage('Welcome');
-            break;
-        case 'Welcome':
-            displayAlert(
-                'success', 
-                e.detail.payload.sender === e.detail.name
-                ? `Welcomme to Group Chat Server, ${e.detail.name}!`
-                : `${e.detail.payload.sender} joins the Chat Server. Say Hello to ${e.detail.payload.sender}!`
-            );
-            break;
-        case 'Goodbye':
-            displayAlert('warning', `${e.detail.payload.sender} left the Chat Server.`);
-            break;
-        case 'Members':
-            for (const members of e.detail.payload.message) {
-                if (members.member === e.detail.name) continue;
-                addMember(members.member);
-            }
-            progressbar.style.display = 'none';
-            break;
-        case 'Whisper':
-            if (e.detail.payload.sender === e.detail.name) {
-                displayToast(`Succefully whispered to ${e.detail.payload.sender}.`);
-                displayAlert('secondary', `Whispers to ${e.detail.payload.sender}: ${e.detail.payload.message}`);
-            } else {
-                displayToast(`${e.detail.payload.sender} whisper to you.`);
-                displayAlert('secondary', `${e.detail.payload.sender} whispers to you: ${e.detail.payload.message}`);
-            }
-            break;
-        case 'Invite':
-            addChatRoom(e.detail.payload.chatRoomId);
-            displayToast(
-                e.detail.payload.sender === e.detail.name
-                ? `New chatroom with ${e.detail.payload.receiver} is created.`
-                : `${e.detail.payload.receiver} invite you to new chatroom.`,
-            );
-            break;
-        // case 'Create':
-        //     addChatRoom(e.detail.payload.chatRoomId, e.detail.payload.sender);
-        //     break;
+        switch (e.data.event) {
+            case 'open':
+                sendMessage('Initial');
+                break;
+            case 'close':
+                setEnablity(false, '#members', '#chatRooms', '#message', '#send');
+                displayAlert('danger', `Server terminated. See you next time, ${sessionStorage.getItem('nickname')}!`);
+                sessionStorage.removeItem('nickname'); 
+                break;
+            case 'previous':
+                if (e.data.arg.chatRoomId == 0) displayMessage(e.data.arg);
+                else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatRoomMap.get(e0.data.arg.chatRoomId)}.`);    
+                break;
+            case 'action':
+                switch (e.data.arg.type) {
+                    case 'Initial':
+                        setEnablity(true, '#members', '#chatRooms', '#message', '#send');
+                        sendMessage('Welcome');
+                        break;
+                    case 'Welcome':
+                        displayAlert(
+                            'success', 
+                            e.data.arg.sender === sessionStorage.getItem('nickname')
+                            ? `Welcomme to Group Chat Server, ${e.data.arg.sender}!`
+                            : `${e.data.arg.sender} joins the Chat Server. Say Hello to ${e.data.arg.sender}!`
+                        );
+                        break;
+                    case 'Goodbye':
+                        displayAlert('warning', `${e.data.arg.sender} left the Chat Server.`);
+                        break;
+                    case 'Members':
+                        for (const members of e.data.arg.message) {
+                            if (members.member === sessionStorage.getItem('nickname')) continue;
+                            addMember(members.member);
+                        }
+                        progressbar.style.display = 'none';
+                        break;
+                    case 'Whisper':
+                        if (e.data.arg.sender === sessionStorage.getItem('nickname')) {
+                            displayToast(`Succefully whispered to ${e.data.arg.sender}.`);
+                            displayAlert('secondary', `Whispers to ${e.data.arg.sender}: ${e.data.arg.message}`);
+                        } else {
+                            displayToast(`${e.data.arg.sender} whisper to you.`);
+                            displayAlert('secondary', `${e.data.arg.sender} whispers to you: ${e.data.arg.message}`);
+                        }
+                        break;
+                    case 'Invite':
+                        addChatRoom(e.data.arg.chatRoomId);
+                        displayToast(
+                            e.data.arg.sender === sessionStorage.getItem('nickname')
+                            ? `New chatroom with ${e.data.arg.receiver} is created.`
+                            : `${e.data.arg.receiver} invite you to new chatroom.`,
+                        );
+                        break;
+                    // case 'Create':
+                    //     addChatRoom(e.data.arg.chatRoomId, e.data.arg.sender);
+                    //     break;
+                }
+        }
     }
 })
 
@@ -241,7 +256,8 @@ displayModal(
     'Welcome to Group Chat Server',
     `<input id="nickname" class="form-control" placeholder="Please type your nickname here and click 'Confirm'.">`,
     () => {
-        const nickname = document.querySelector('#nickname').value;
-        manager.emit('connect', {name: nickname});
+        sessionStorage.setItem('nickname', document.querySelector('#nickname').value);
+        worker = new SharedWorker('./js/background.js');
+        workerWatchdog.dispatchEvent(new Event('worker'));
     }, true
 );
