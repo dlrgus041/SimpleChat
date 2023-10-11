@@ -33,7 +33,7 @@ app.get('/chatroom', (req, res) => {
 })
 
 app.post('/chatroom', (req, res) => {
-    res.render('chatroom');
+    res.render('chatroom', req.body);
 });
 
 const wss = new WebSocketServer({ port: 8080 });
@@ -41,6 +41,7 @@ const wss = new WebSocketServer({ port: 8080 });
 const websocketMap = new Map(); // <String, WebSocket>
 const chatRoomMember = new Map(); // <Number, Set<String>>
 const chatMessages = new Map(); // <Number, Array<JSON>>
+const chatRoomName = new Map(); // <String, Map<Number, String>>
 var id = 0;
 
 function send(receiver, msg) {
@@ -53,22 +54,22 @@ function broadcast(data) {
     }
 }
 
-function toJSON(type, sender = null, receiver = null, message = null, chatRoomId = 0) {
+function toJSON(event, sender = null, receiver = null, message = null, chatroomID = 0) {
     return {
-        type: type,
+        event: event,
         sender: sender,
         receiver: receiver,
         message: message,
-        chatRoomId: chatRoomId
+        chatroomID: chatroomID
     }
 }
 
-function saveMsg(data, chatRoomId = 0) {
-    chatMessages.get(chatRoomId).push(data);
+function saveMsg(data, chatroomID = 0) {
+    chatMessages.get(chatroomID).push(data);
 }
 
-function restoreMsg(receiver, chatRoomId) {
-    send(receiver, toJSON('Initial', null, null, chatMessages.get(chatRoomId), chatRoomId))
+function restoreMsg(receiver, chatroomID) {
+    send(receiver, toJSON('Initial', null, null, chatMessages.get(chatroomID), chatroomID))
 }
 
 wss.on('connection', (ws, req) => {
@@ -80,30 +81,30 @@ wss.on('connection', (ws, req) => {
   
     ws.on('message', (rawdata) => {
         const data = JSON.parse(rawdata);
-        switch (data.type) {
+        switch (data.event) {
             case 'Initial':
-                if (data.chatRoomId == 0) websocketMap.set(data.sender, ws);
-                restoreMsg(data.sender, data.chatRoomId);
+                if (data.chatroomID == 0) websocketMap.set(data.sender, ws);
+                restoreMsg(data.sender, data.chatroomID);
                 break;
             case 'Welcome':
                 broadcast(data);
                 break;
-            case 'Message':
+            case 'Chat':
                 if (data.receiver === 'server') {
                     saveMsg(data);
-                } else if (data.chatRoomId == 0) {
+                } else if (data.chatroomID == 0) {
                     broadcast(data);
                     saveMsg(data);
                 } else {
-                    for (const member of chatRoomMember.get(data.chatRoomId)) {
+                    for (const member of chatRoomMember.get(data.chatroomID)) {
                         send(member, data);
                     }
-                    saveMsg(data, data.chatRoomId);
+                    saveMsg(data, data.chatroomID);
                 }
                 break;
             case 'Members':
                 data.message = [];
-                for (const member of (data.chatRoomId > 0 ? chatRoomMember.get(data.chatRoomId) : websocketMap.keys())) {
+                for (const member of (data.chatroomID > 0 ? chatRoomMember.get(data.chatroomID) : websocketMap.keys())) {
                     data.message.push({ member : member });
                 }
                 send(data.sender, data);
@@ -113,19 +114,17 @@ wss.on('connection', (ws, req) => {
                 send(data.sender, data);
                 break;
             case 'Invite':
-                data.chatRoomId = ++id;
-                chatMessages.set(data.chatRoomId, []);
-                chatRoomMember.set(data.chatRoomId, new Set([data.sender, data.receiver]));
+                data.chatroomID = ++id;
+                chatMessages.set(data.chatroomID, []);
+                chatRoomMember.set(data.chatroomID, new Set([data.sender, data.receiver]));
                 send(data.sender, data);
                 send(data.receiver, data);
                 break;
             // case 'Leave':
-            //     chatRoomMember.get(data.chatRoomId).delete(data.sender);
-            //     if (chatRoomMember.get(data.chatRoomId).size != 0) {
-            //         for (const member of chatRoomMember.get(data.chatRoomId)) {
-            //             send(member, data)
-            //         }
-            //     } else chatRoomMember.delete(data.chatRoomId);
+            //     chatRoomMember.get(data.chatroomID).delete(data.sender);
+            //     if (chatRoomMember.get(data.chatroomID).size != 0) {
+            //         for (const member of chatRoomMember.get(data.chatroomID)) { send(member, data) }
+            //     } else chatRoomMember.delete(data.chatroomID);
             //     break;
         }
     });

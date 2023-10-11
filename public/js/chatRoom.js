@@ -1,4 +1,4 @@
-import { manager, sendMessage, chatRoomMap, getFocused } from './background.js';
+import { manager, sendMessage, chatRoomMap, getFocused } from './worker.js';
 
 // HTML elements
 const chatArea = document.querySelector('#chatArea');
