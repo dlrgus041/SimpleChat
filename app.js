@@ -3,6 +3,8 @@ import session from 'express-session';
 import signature from 'cookie-signature';
 import { WebSocketServer } from 'ws';
 import { StringDecoder } from 'string_decoder';
+
+import Form from './Form.js';
         
 const app = express();
 const secret = 'The quick brown fox jumps over the lazy dog.';
@@ -54,36 +56,26 @@ function broadcast(data) {
     }
 }
 
-function toJSON(event, sender = null, receiver = null, message = null, chatroomID = 0) {
-    return {
-        event: event,
-        sender: sender,
-        receiver: receiver,
-        message: message,
-        chatroomID: chatroomID
-    }
-}
-
-function saveMsg(data, chatroomID = 0) {
+function storeMsg(data, chatroomID = 0) {
     chatMessages.get(chatroomID).push(data);
 }
 
 function restoreMsg(receiver, chatroomID) {
-    send(receiver, toJSON('Initial', null, null, chatMessages.get(chatroomID), chatroomID))
+    send(receiver, new Form('Initial', null, null, chatMessages.get(chatroomID), chatroomID))
 }
 
 wss.on('connection', (ws, req) => {
 
     ws.on('close', (code, reason) => {
         websocketMap.delete(reason.toString());
-        broadcast(toJSON('Goodbye', reason.toString()));
+        broadcast(new Form('Goodbye', reason.toString()));
     });
   
     ws.on('message', (rawdata) => {
         const data = JSON.parse(rawdata);
         switch (data.event) {
             case 'Initial':
-                if (data.chatroomID == 0) websocketMap.set(data.sender, ws);
+                if (data.chatroomID === 0) websocketMap.set(data.sender, ws);
                 restoreMsg(data.sender, data.chatroomID);
                 break;
             case 'Welcome':
@@ -91,15 +83,15 @@ wss.on('connection', (ws, req) => {
                 break;
             case 'Chat':
                 if (data.receiver === 'server') {
-                    saveMsg(data);
-                } else if (data.chatroomID == 0) {
+                    storeMsg(data);
+                } else if (data.chatroomID === 0) {
+                    storeMsg(data);
                     broadcast(data);
-                    saveMsg(data);
                 } else {
                     for (const member of chatRoomMember.get(data.chatroomID)) {
                         send(member, data);
                     }
-                    saveMsg(data, data.chatroomID);
+                    storeMsg(data, data.chatroomID);
                 }
                 break;
             case 'Members':
@@ -113,12 +105,17 @@ wss.on('connection', (ws, req) => {
                 send(data.receiver, data);
                 send(data.sender, data);
                 break;
-            case 'Invite':
-                data.chatroomID = ++id;
-                chatMessages.set(data.chatroomID, []);
-                chatRoomMember.set(data.chatroomID, new Set([data.sender, data.receiver]));
-                send(data.sender, data);
-                send(data.receiver, data);
+            case 'Invite': // have to consider: if 'data.sender' already have chatroom with 'data.receiver'.
+                // if (chatRoomMember.has(data.chatroomID)) {
+                //     data.message = `Chatroom with ${data.receiver} already exist.`;
+                //     send(data.sender, data);
+                // } else {
+                    data.chatroomID = ++id;
+                    chatMessages.set(data.chatroomID, []);
+                    chatRoomMember.set(data.chatroomID, new Set([data.sender, data.receiver]));
+                    send(data.sender, data);
+                    send(data.receiver, data);
+                // }
                 break;
             // case 'Leave':
             //     chatRoomMember.get(data.chatroomID).delete(data.sender);
