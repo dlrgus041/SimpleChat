@@ -1,4 +1,4 @@
-export default class ChatroomData {
+export default class ChatroomInfo {
 
     #members = new Set();
     #messages = [];

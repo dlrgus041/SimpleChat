@@ -187,61 +187,26 @@ addEventListener('beforeunload', (e) => {
 
 // BroadcastChannel
 bc.addEventListener('message', (e) => {
-
-    function isMine() {
-        return e.data.sender === localStorage.getItem('nickname');
-    }
-
-    switch (e.data.event) {
-        case 'Chat':
-            if (e.data.chatroomID === 0) displayMessage(e.data);
-            else {
-                if (e.data.chatroomID !== parseInt(localStorage.getItem('focus'))) updateUnreadCount(e.data.chatroomID);
-                if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatroomNameMap.get(e.data.chatroomID)}.`);
+    if (e.data.event === 'Chat') {
+        if (e.data.chatroomID === 0) displayMessage(e.data);
+        else {
+            if (e.data.chatroomID !== parseInt(localStorage.getItem('focus'))) updateUnreadCount(e.data.chatroomID);
+            if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatroomNameMap.get(e.data.chatroomID)}.`);
+        }
+    } else if (e.data.event === 'Close') {
+        setEnablity(false, '#members', '#chatrooms', '#message', '#send');
+        displayAlert('danger', `Server terminated. See you next time, ${localStorage.getItem('nickname')}!`);            
+    } else if (e.data.chatroomID === 0) {
+        if (e.data.event === 'Initial') {
+            setEnablity(true, '#members', '#chatrooms', '#message', '#send');
+            send('Welcome', e.data.receiver);
+        } else if (e.data.event === 'Members') {
+            for (const member of e.data.message) {
+                if (member === localStorage.getItem('nickname')) continue;
+                addMember(member);
             }
-            break;
-        case 'Invite':
-            if (e.data.message === null) {
-                chatroomNameMap.set(e.data.chatroomID, isMine() ? e.data.receiver : e.data.sender);
-                unreadCount.set(e.data.chatroomID, 0);
-                addChatRoom(e.data.chatroomID);
-                displayToast( isMine() ? `New chatroom with ${e.data.receiver} is created.` : `${e.data.sender} invite you to new chatroom.` );
-            } else displayAlert('warning', e.data.message);
-            break;
-        case 'Close':
-            setEnablity(false, '#members', '#chatrooms', '#message', '#send');
-            displayAlert('danger', `Server terminated. See you next time, ${localStorage.getItem('nickname')}!`);            
-            break;
-        default:
-            if (e.data.chatroomID !== 0) break;
-            switch (e.data.event) {    
-                case 'Initial':
-                    setEnablity(true, '#members', '#chatrooms', '#message', '#send');
-                    send('Welcome', e.data.receiver);
-                    break;
-                case 'Welcome':
-                    displayAlert('success', isMine() ? `Welcome ${e.data.message ? ' back' : ''} to Group Chat Server, ${localStorage.getItem('nickname')}!` : `${e.data.sender} joins the Chat Server. ${e.data.message ? ('Say Hello to ' + e.data.sender) : ''}`);
-                    break;
-                case 'Goodbye':
-                    displayAlert('warning', `${e.data.sender} left the Chat Server.`);
-                    break;
-                case 'Members':
-                    for (const member of e.data.message) {
-                        if (member === localStorage.getItem('nickname')) continue;
-                        addMember(member);
-                    }
-                    memberProgress.style.display = 'none';
-                    break;
-                case 'Whisper':
-                    if (isMine()) {
-                        displayToast(`Succefully whispered to ${e.data.receiver}.`);
-                        displayAlert('secondary', `Whispers to ${e.data.receiver}: ${e.data.message}`);
-                    } else {
-                        displayToast(`${e.data.sender} whisper to you.`);
-                        displayAlert('secondary', `${e.data.sender} whispers to you: ${e.data.message}`);
-                    }
-                    break;
-            }
+            memberProgress.style.display = 'none';
+        }
     }
 });
 
@@ -254,9 +219,30 @@ displayModal(
         localStorage.setItem('nickname', document.querySelector('#nickname').value);
         worker = new Worker('./js/worker.js');
         worker.addEventListener('message', (e) => {
+            const isMine = (e.data.sender === localStorage.getItem('nickname'));
             switch (e.data.event) {
                 case 'Open':
                     send('Initial', []);
+                    break;
+                case 'Welcome':
+                    displayAlert('success', isMine ? `Welcome ${e.data.message ? ' back' : ''} to Group Chat Server, ${localStorage.getItem('nickname')}!` : `${e.data.sender} joins the Chat Server. ${e.data.message ? ('Say Hello to ' + e.data.sender) : ''}`);
+                    break;
+                case 'Goodbye':
+                    displayAlert('warning', `${e.data.sender} left the Chat Server.`);
+                    break;
+                case 'Invite':
+                    if (e.data.message === null) {
+                        displayToast( isMine ? `New chatroom with ${e.data.receiver} is created.` : `${e.data.sender} invite you to new chatroom.` );
+                    } else displayAlert('warning', e.data.message);
+                    break;
+                case 'Whisper':
+                    if (isMine) {
+                        displayToast(`Succefully whispered to ${e.data.receiver}.`);
+                        displayAlert('secondary', `Whispers to ${e.data.receiver}: ${e.data.message}`);
+                    } else {
+                        displayToast(`${e.data.sender} whisper to you.`);
+                        displayAlert('secondary', `${e.data.sender} whispers to you: ${e.data.message}`);
+                    }
                     break;
             }
         })

@@ -1,5 +1,5 @@
 export default class Payload {
-    constructor(event, receiver, message, chatroomID) {
+    constructor(event, receiver = null, message = null, chatroomID = 0) {
         this.event = event;
         this.sender = localStorage.getItem('nickname');
         this.receiver = receiver;

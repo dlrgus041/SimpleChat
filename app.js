@@ -6,7 +6,7 @@ import { StringDecoder } from 'string_decoder';
 
 import Payload from './form/Payload.js';
 import UserRoomInfo from './form/UserRoomInfo.js';
-import ChatroomData from './form/ChatroomData.js';
+import ChatroomInfo from './form/ChatroomInfo.js';
         
 const app = express();
 const secret = 'The quick brown fox jumps over the lazy dog.';
@@ -44,7 +44,7 @@ const wss = new WebSocketServer({ port: 8080 });
 
 const websocketMap = new Map(); // <String, WebSocket>
 const userRoomInfoMap = new Map(); // <String, Map<Number, UserRoomInfo>>
-const chatroomDataMap = new Map(); // <Number, chatroomData>
+const ChatroomInfoMap = new Map(); // <Number, ChatroomInfo>
 var id = 0;
 
 function sendPayload(payload, member) {
@@ -52,7 +52,7 @@ function sendPayload(payload, member) {
 }
 
 function broadcast(payload, chatroomID = 0) {
-    for (const member of chatroomDataMap.get(chatroomID).getMembers()) {
+    for (const member of ChatroomInfoMap.get(chatroomID).getMembers()) {
         if (chatroomID === 0 || websocketMap.has(member)) sendPayload(payload, member);
         else userRoomInfoMap.get(member).get(chatroomID).unreadCount += 1;
     }
@@ -75,19 +75,19 @@ wss.on('connection', (ws, req) => {
                         for (const [chatroomID, userRoomInfo] of userRoomInfoMap.get(data.sender)) { data.receiver.push({chatroomID: chatroomID, userRoomInfo: userRoomInfo}); }
                     } else userRoomInfoMap.set(data.sender, new Map());
                 }
-                data.message = chatroomDataMap.get(data.chatroomID).getMessages();
+                data.message = ChatroomInfoMap.get(data.chatroomID).getMessages();
                 sendPayload(data, data.sender);
                 break;
             case 'Welcome':
                 broadcast(data);
                 break;
             case 'Chat':
-                chatroomDataMap.get(data.chatroomID).storeMessage(data);
+                ChatroomInfoMap.get(data.chatroomID).storeMessage(data);
                 broadcast(data, data.chatroomID);
                 break;
             case 'Members':
                 data.message = [];
-                for (const member of chatroomDataMap.get(data.chatroomID).getMembers()) { data.message.push(member); }
+                for (const member of ChatroomInfoMap.get(data.chatroomID).getMembers()) { data.message.push(member); }
                 sendPayload(data, data.sender);
                 break;
             case 'Whisper':
@@ -102,7 +102,7 @@ wss.on('connection', (ws, req) => {
                     data.chatroomID = ++id;
                     userRoomInfoMap.get(data.sender).set(data.chatroomID, new UserRoomInfo(data.receiver));
                     userRoomInfoMap.get(data.receiver).set(data.chatroomID, new UserRoomInfo(data.sender));
-                    chatroomDataMap.set(data.chatroomID, new ChatroomData(data.sender, data.receiver));
+                    ChatroomInfoMap.set(data.chatroomID, new ChatroomInfo(data.sender, data.receiver));
                     sendPayload(data, data.sender);
                     sendPayload(data, data.receiver);
                 // }
@@ -118,4 +118,4 @@ wss.on('connection', (ws, req) => {
 });
 
 // initailize
-chatroomDataMap.set(0, new ChatroomInfo('Group Chat'));
+ChatroomInfoMap.set(0, new ChatroomInfo('Group Chat'));
