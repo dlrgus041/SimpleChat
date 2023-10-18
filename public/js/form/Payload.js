@@ -1,4 +1,4 @@
-export default class Form {
+export default class Payload {
     constructor(event, receiver, message, chatroomID) {
         this.event = event;
         this.sender = localStorage.getItem('nickname');

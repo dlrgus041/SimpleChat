@@ -1,26 +1,32 @@
-import Form from './Form.js';
+import Payload from './form/Payload.js';
+import WPayload from './form/WPayload.js';
 
 const bc = new BroadcastChannel('channel');
-const chatRoomNameMap = new Map(); // <Number, String>
+let worker = null;
 
 // HTML elements
 const groupChatArea = document.querySelector('#groupChatArea');
 const memberArea = document.querySelector('#memberArea');
-const chatRoomArea = document.querySelector('#chatRoomArea');
+const chatroomArea = document.querySelector('#chatroomArea');
 const toastArea = document.querySelector('#toastArea');
 
 const groupChatForm = document.querySelector('#groupChatForm');
 const alertForm = document.querySelector('#alertForm');
 const memberForm = document.querySelector('#memberForm');
-const chatRoomForm = document.querySelector('#chatRoomForm');
+const chatroomForm = document.querySelector('#chatroomForm');
 const modalForm = document.querySelector('#modalForm');
 const toastForm = document.querySelector('#toastForm');
 
 const memberProgress = document.querySelector('#progress');
 
 // functions
+
+function post(event, data) {
+    worker?.postMessage(new WPayload(event, data));
+}
+
 function send(event, receiver = null, message = null) {
-    bc.postMessage(new Form(event, receiver, message, 0));
+    bc.postMessage(new Payload(event, receiver, message, 0));
 }
 
 function displayAlert(type, message) {
@@ -82,34 +88,32 @@ function clearMember() {
 
 function addChatRoom(chatroomID) {
 
-    const node = chatRoomForm.cloneNode(true);
+    const node = chatroomForm.cloneNode(true);
     node.style.display = 'block';
-    chatRoomNameMap.set(chatroomID, `ChatRoom ${chatroomID}`);
 
     node.addEventListener('click', () => {
         localStorage.setItem('focus', chatroomID);
-        enterChatRoom('/chatroom', {id: chatroomID});
+        updateUnreadCount(chatroomID, true);
+        enterChatRoom('/chatroom', {chatroomID: chatroomID, chatroomName: chatroomNameMap.get(chatroomID)});
     });
 
-    node.children[0].children[0].children[0].innerHTML = chatRoomNameMap.get(chatroomID);
-    node.children[0].children[1].children[0].addEventListener('click', () => {
-        send('Members', null, null, chatroomID);
-    });
+    node.children[0].children[0].children[0].innerHTML = `${chatroomNameMap.get(chatroomID)}  <span class="badge text-bg-secondary">unreadCount</span>`;
+    node.children[0].children[1].children[0].addEventListener('click', () => { send('Members', null, null, chatroomID); });
 
     node.children[0].children[1].children[1].addEventListener('click', () => {
         displayModal(
             'Warning',
-            `All messages in ${chatRoomNameMap.get(chatroomID)} will be deleted. Are you sure?`,
-            () => { send('Leave', null, null, chatroomID); }
+            `All messages in ${chatroomNameMap.get(chatroomID)} will be deleted. Are you sure?`,
+            () => { send('Leave', chatroomID); }
         )
     });
 
-    chatRoomArea.appendChild(node);
+    chatroomArea.appendChild(node);
 }
 
 function removeChatRoom(chatroomID) {
-    chatRoomMap.get(chatroomID).remove();
-    chatRoomMap.delete(chatroomID);
+    chatroomMap.get(chatroomID).remove();
+    chatroomMap.delete(chatroomID);
 }
 
 function displayModal(title, body, callback, singleBtn = false) {
@@ -166,59 +170,72 @@ document.querySelector('#members').addEventListener('click', () => {
     send('Members');
 });
 
-
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState == 'visible') {
         localStorage.setItem('focus', 0);
     }
 });
 
+addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    displayModal(
+        'Warning',
+        'Are you sure that you want to leave chat server?',
+        () => {}
+    );
+});
+
 // BroadcastChannel
 bc.addEventListener('message', (e) => {
+
+    function isMine() {
+        return e.data.sender === localStorage.getItem('nickname');
+    }
+
     switch (e.data.event) {
         case 'Chat':
             if (e.data.chatroomID === 0) displayMessage(e.data);
-            else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatRoomNameMap.get(e.data.chatroomID)}.`);
+            else {
+                if (e.data.chatroomID !== parseInt(localStorage.getItem('focus'))) updateUnreadCount(e.data.chatroomID);
+                if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatroomNameMap.get(e.data.chatroomID)}.`);
+            }
             break;
         case 'Invite':
             if (e.data.message === null) {
+                chatroomNameMap.set(e.data.chatroomID, isMine() ? e.data.receiver : e.data.sender);
+                unreadCount.set(e.data.chatroomID, 0);
                 addChatRoom(e.data.chatroomID);
-                displayToast(
-                    e.data.sender === localStorage.getItem('nickname')
-                    ? `New chatroom with ${e.data.receiver} is created.`
-                    : `${e.data.receiver} invite you to new chatroom.`,
-                );
+                displayToast( isMine() ? `New chatroom with ${e.data.receiver} is created.` : `${e.data.sender} invite you to new chatroom.` );
             } else displayAlert('warning', e.data.message);
+            break;
+        case 'Close':
+            setEnablity(false, '#members', '#chatrooms', '#message', '#send');
+            displayAlert('danger', `Server terminated. See you next time, ${localStorage.getItem('nickname')}!`);            
             break;
         default:
             if (e.data.chatroomID !== 0) break;
             switch (e.data.event) {    
                 case 'Initial':
-                    setEnablity(true, '#members', '#chatRooms', '#message', '#send');
-                    send('Welcome');
+                    setEnablity(true, '#members', '#chatrooms', '#message', '#send');
+                    send('Welcome', e.data.receiver);
                     break;
                 case 'Welcome':
-                    displayAlert(
-                        'success', 
-                        e.data.sender === localStorage.getItem('nickname')
-                        ? `Welcomme to Group Chat Server, ${localStorage.getItem('nickname')}!`
-                        : `${e.data.sender} joins the Chat Server. Say Hello to ${e.data.sender}!`
-                    );
+                    displayAlert('success', isMine() ? `Welcome ${e.data.message ? ' back' : ''} to Group Chat Server, ${localStorage.getItem('nickname')}!` : `${e.data.sender} joins the Chat Server. ${e.data.message ? ('Say Hello to ' + e.data.sender) : ''}`);
                     break;
                 case 'Goodbye':
                     displayAlert('warning', `${e.data.sender} left the Chat Server.`);
                     break;
                 case 'Members':
-                    for (const members of e.data.message) {
-                        if (members.member === localStorage.getItem('nickname')) continue;
-                        addMember(members.member);
+                    for (const member of e.data.message) {
+                        if (member === localStorage.getItem('nickname')) continue;
+                        addMember(member);
                     }
                     memberProgress.style.display = 'none';
                     break;
                 case 'Whisper':
-                    if (e.data.sender === localStorage.getItem('nickname')) {
-                        displayToast(`Succefully whispered to ${e.data.sender}.`);
-                        displayAlert('secondary', `Whispers to ${e.data.sender}: ${e.data.message}`);
+                    if (isMine()) {
+                        displayToast(`Succefully whispered to ${e.data.receiver}.`);
+                        displayAlert('secondary', `Whispers to ${e.data.receiver}: ${e.data.message}`);
                     } else {
                         displayToast(`${e.data.sender} whisper to you.`);
                         displayAlert('secondary', `${e.data.sender} whispers to you: ${e.data.message}`);
@@ -229,22 +246,17 @@ bc.addEventListener('message', (e) => {
 });
 
 // initialize
-chatRoomNameMap.set(0, 'Group Chat');
 localStorage.setItem('focus', 0);
 displayModal(
     'Welcome to Group Chat Server',
     `<input id="nickname" class="form-control" placeholder="Please type your nickname here and click 'Confirm'.">`,
     () => {
         localStorage.setItem('nickname', document.querySelector('#nickname').value);
-        const worker = new Worker('./js/worker.js');
+        worker = new Worker('./js/worker.js');
         worker.addEventListener('message', (e) => {
             switch (e.data.event) {
                 case 'Open':
-                    send('Initial');
-                    break;
-                case 'Close':
-                    setEnablity(false, '#members', '#chatRooms', '#message', '#send');
-                    displayAlert('danger', `Server terminated. See you next time, ${localStorage.getItem('nickname')}!`);            
+                    send('Initial', []);
                     break;
             }
         })

@@ -1,0 +1,21 @@
+// events
+//
+// open
+// - when websocket established between client and server.
+// detail: null
+//
+// close
+// - when client disconnects from server, or vice versa.
+// detail: null
+//
+// chat
+// - when someone send message to group/private chat.
+// detail: {payload[JSON]}
+//
+// action
+// - when action(execpt message) is fired.
+// detail: {payload[JSON]}
+//
+// send
+// - when 'sendMessage' function called.
+// detail: {payload[JSON]}

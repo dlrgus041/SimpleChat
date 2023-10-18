@@ -95,7 +95,10 @@ document.addEventListener("visibilitychange", () => {
 bc.addEventListener('message', (e) => {
     if (e.data.event === 'Chat') {
         if (e.data.chatroomID === chatroomID) displayMessage(e.data);
-        else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatRoomNameMap.get(e.data.chatroomID)}.`);
+        else if (document.visibilityState === 'visible') displayToast(`New message arrived from ${chatroomNameMap.get(e.data.chatroomID)}.`);
+    } else if (e.data.event === 'Close') {
+        setEnablity(false, '#members', '#message', '#send');
+        displayAlert('danger', `Server terminated. See you next time, ${localStorage.getItem('nickname')}!`);
     } else if (e.data.chatroomID === chatroomID) {
         switch (e.data.event) {
             case 'Initial':

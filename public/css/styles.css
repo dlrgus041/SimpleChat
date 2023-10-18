@@ -2,7 +2,7 @@
     box-sizing: content-box;
 }
 
-#Members, #ChatRooms {
+#members, #chatrooms {
     color: white;
 }
 
@@ -64,4 +64,8 @@ li {
 
 #chatRoomForm {
     cursor: pointer;
+}
+
+.badge {
+    display: none;
 }

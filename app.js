@@ -4,7 +4,9 @@ import signature from 'cookie-signature';
 import { WebSocketServer } from 'ws';
 import { StringDecoder } from 'string_decoder';
 
-import Form from './Form.js';
+import Payload from './form/Payload.js';
+import UserRoomInfo from './form/UserRoomInfo.js';
+import ChatroomData from './form/ChatroomData.js';
         
 const app = express();
 const secret = 'The quick brown fox jumps over the lazy dog.';
@@ -41,91 +43,79 @@ app.post('/chatroom', (req, res) => {
 const wss = new WebSocketServer({ port: 8080 });
 
 const websocketMap = new Map(); // <String, WebSocket>
-const chatRoomMember = new Map(); // <Number, Set<String>>
-const chatMessages = new Map(); // <Number, Array<JSON>>
-const chatRoomName = new Map(); // <String, Map<Number, String>>
+const userRoomInfoMap = new Map(); // <String, Map<Number, UserRoomInfo>>
+const chatroomDataMap = new Map(); // <Number, chatroomData>
 var id = 0;
 
-function send(receiver, msg) {
-    websocketMap.get(receiver).send(JSON.stringify(msg));
+function sendPayload(payload, member) {
+    websocketMap.get(member).send(JSON.stringify(payload));
 }
 
-function broadcast(data) {
-    for (const websocket of websocketMap.values()) {
-        websocket.send(JSON.stringify(data));
+function broadcast(payload, chatroomID = 0) {
+    for (const member of chatroomDataMap.get(chatroomID).getMembers()) {
+        if (chatroomID === 0 || websocketMap.has(member)) sendPayload(payload, member);
+        else userRoomInfoMap.get(member).get(chatroomID).unreadCount += 1;
     }
-}
-
-function storeMsg(data, chatroomID = 0) {
-    chatMessages.get(chatroomID).push(data);
-}
-
-function restoreMsg(receiver, chatroomID) {
-    send(receiver, new Form('Initial', null, null, chatMessages.get(chatroomID), chatroomID))
 }
 
 wss.on('connection', (ws, req) => {
 
     ws.on('close', (code, reason) => {
         websocketMap.delete(reason.toString());
-        broadcast(new Form('Goodbye', reason.toString()));
+        broadcast(new Payload('Goodbye', reason.toString()));
     });
   
     ws.on('message', (rawdata) => {
         const data = JSON.parse(rawdata);
         switch (data.event) {
             case 'Initial':
-                if (data.chatroomID === 0) websocketMap.set(data.sender, ws);
-                restoreMsg(data.sender, data.chatroomID);
+                if (data.chatroomID === 0) {
+                    websocketMap.set(data.sender, ws);
+                    if (userRoomInfoMap.has(data.sender)) {
+                        for (const [chatroomID, userRoomInfo] of userRoomInfoMap.get(data.sender)) { data.receiver.push({chatroomID: chatroomID, userRoomInfo: userRoomInfo}); }
+                    } else userRoomInfoMap.set(data.sender, new Map());
+                }
+                data.message = chatroomDataMap.get(data.chatroomID).getMessages();
+                sendPayload(data, data.sender);
                 break;
             case 'Welcome':
                 broadcast(data);
                 break;
             case 'Chat':
-                if (data.receiver === 'server') {
-                    storeMsg(data);
-                } else if (data.chatroomID === 0) {
-                    storeMsg(data);
-                    broadcast(data);
-                } else {
-                    for (const member of chatRoomMember.get(data.chatroomID)) {
-                        send(member, data);
-                    }
-                    storeMsg(data, data.chatroomID);
-                }
+                chatroomDataMap.get(data.chatroomID).storeMessage(data);
+                broadcast(data, data.chatroomID);
                 break;
             case 'Members':
                 data.message = [];
-                for (const member of (data.chatroomID > 0 ? chatRoomMember.get(data.chatroomID) : websocketMap.keys())) {
-                    data.message.push({ member : member });
-                }
-                send(data.sender, data);
+                for (const member of chatroomDataMap.get(data.chatroomID).getMembers()) { data.message.push(member); }
+                sendPayload(data, data.sender);
                 break;
             case 'Whisper':
-                send(data.receiver, data);
-                send(data.sender, data);
+                sendPayload(data, data.sender);
+                sendPayload(data, data.receiver);
                 break;
             case 'Invite': // have to consider: if 'data.sender' already have chatroom with 'data.receiver'.
-                // if (chatRoomMember.has(data.chatroomID)) {
+                // if (chatroomMember.has(data.chatroomID)) {
                 //     data.message = `Chatroom with ${data.receiver} already exist.`;
-                //     send(data.sender, data);
+                //     sendPayload(data.sender, data);
                 // } else {
                     data.chatroomID = ++id;
-                    chatMessages.set(data.chatroomID, []);
-                    chatRoomMember.set(data.chatroomID, new Set([data.sender, data.receiver]));
-                    send(data.sender, data);
-                    send(data.receiver, data);
+                    userRoomInfoMap.get(data.sender).set(data.chatroomID, new UserRoomInfo(data.receiver));
+                    userRoomInfoMap.get(data.receiver).set(data.chatroomID, new UserRoomInfo(data.sender));
+                    chatroomDataMap.set(data.chatroomID, new ChatroomData(data.sender, data.receiver));
+                    sendPayload(data, data.sender);
+                    sendPayload(data, data.receiver);
                 // }
                 break;
             // case 'Leave':
-            //     chatRoomMember.get(data.chatroomID).delete(data.sender);
-            //     if (chatRoomMember.get(data.chatroomID).size != 0) {
-            //         for (const member of chatRoomMember.get(data.chatroomID)) { send(member, data) }
-            //     } else chatRoomMember.delete(data.chatroomID);
+            //     chatroomMember.get(data.chatroomID).delete(data.sender);
+            //     if (chatroomMember.get(data.chatroomID).size != 0) {
+            //         for (const member of chatroomMember.get(data.chatroomID)) { sendPayload(member, data) }
+            //     } else chatroomMember.delete(data.chatroomID);
             //     break;
         }
     });
 });
 
 // initailize
-chatMessages.set(0, []);
+chatroomDataMap.set(0, new ChatroomInfo('Group Chat'));
